@@ -1,0 +1,140 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #f7f8fc;
+  --card: #ffffff;
+  --text: #1d2939;
+  --muted: #6b7280;
+  --primary: #0f76ff;
+  --border: #d1d5db;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+nav {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  border: 1px solid var(--border);
+  background: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+button.active,
+button:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+}
+
+.summary {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(15, 118, 255, 0.08);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.product-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.product-card h4 {
+  margin: 0 0 10px;
+}
+
+.product-card p {
+  margin: 0 8px 10px;
+  color: var(--muted);
+}
+
+.auth-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+form {
+  display: grid;
+  gap: 12px;
+}
+
+input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+footer {
+  margin-top: 24px;
+  color: var(--muted);
+}
+
+#authInfo {
+  margin-top: 16px;
+  color: var(--primary);
+}
+
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
