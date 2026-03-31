@@ -17,7 +17,7 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const updates = req.body;
     const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true, runValidators: true })
-      .populate('role');
+      .populate('role location');
     res.json({ success: true, data: user });
   } catch (err) {
     res.status(500).json({ message: err.message });

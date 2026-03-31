@@ -70,7 +70,19 @@ npm run seed
 
 > Lưu ý: seed script yêu cầu MongoDB đang chạy và cấu hình `MONGO_URI` trong file `.env` hợp lệ.
 
-## 7. Kiểm tra API cơ bản
+## 7. Chạy test
+
+```powershell
+npm test
+```
+
+Luồng test hiện tại được thiết kế để:
+
+- không tự mở kết nối MongoDB chỉ vì import `app`
+- có endpoint smoke test `GET /api/health`
+- kiểm tra được các nhánh validation/cấu hình cốt lõi mà không phụ thuộc DB thật
+
+## 8. Kiểm tra API cơ bản
 
 Sau khi server chạy, mở trình duyệt hoặc dùng Postman test các endpoint:
 
@@ -79,8 +91,9 @@ Sau khi server chạy, mở trình duyệt hoặc dùng Postman test các endpoi
 - `GET /api/products`
 - `GET /api/products/:id`
 - `GET /api/users/me`
+- `GET /api/health`
 
-## 8. Nếu gặp lỗi cổng bị chiếm
+## 9. Nếu gặp lỗi cổng bị chiếm
 
 Nếu server báo lỗi "Port 3000 is already in use", chạy lại với cổng khác:
 
@@ -89,10 +102,11 @@ PowerShell:
 $env:PORT=3002; npm start
 ```
 
-## 9. Kết luận
+## 10. Kết luận
 
 - `npm install` — cài dependencies
 - `copy .env.example .env` — tạo biến môi trường
 - `npm start` — chạy server
 - `npm run dev` — chạy chế độ phát triển
 - `npm run seed` — nạp dữ liệu mẫu
+- `npm test` — chạy bộ test nền tảng

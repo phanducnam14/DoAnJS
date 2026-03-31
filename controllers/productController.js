@@ -1,6 +1,7 @@
 // Product Controller - Full CRUD, search/filter/boost
 
 const Product = require('../schemas/Product');
+const Location = require('../schemas/Location');
 const { protect, authorize } = require('../utils/jwt');
 const { uploadImages } = require('../utils/upload');
 const Image = require('../schemas/Image');
@@ -37,6 +38,14 @@ exports.getProducts = async (req, res, next) => {
     const query = { isSold: false };
     if (req.query.category) query.category = req.query.category;
     if (req.query.location) query.location = req.query.location;
+    if (req.query.province || req.query.district) {
+      const locationQuery = {};
+      if (req.query.province) locationQuery.province = req.query.province;
+      if (req.query.district) locationQuery.district = req.query.district;
+
+      const locationIds = await Location.find(locationQuery).distinct('_id');
+      query.location = { $in: locationIds };
+    }
     if (req.query.search) query.title = { $regex: req.query.search, $options: 'i' };
     if (req.query.boosted) query.isBoosted = true;
 

@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node bin/www",
     "dev": "nodemon bin/www",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "test": "node --test",
+    "test:ci": "node --test"
   },
   "keywords": [
     "marketplace",
