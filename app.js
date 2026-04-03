@@ -12,6 +12,7 @@ const subcategoriesRouter = require('./routes/subcategories');
 const locationsRouter = require('./routes/locations');
 const favoritesRouter = require('./routes/favorites');
 const metaRouter = require('./routes/meta');
+const conversationsRouter = require('./routes/conversations');
 
 const createApp = () => {
   const app = express();
@@ -37,6 +38,7 @@ const createApp = () => {
   app.use('/api/locations', locationsRouter);
   app.use('/api/favorites', favoritesRouter);
   app.use('/api/meta', metaRouter);
+  app.use('/api/conversations', conversationsRouter);
 
   app.use((req, res, next) => {
     res.status(404).json({ message: 'Not Found' });

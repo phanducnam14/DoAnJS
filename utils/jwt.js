@@ -28,6 +28,8 @@ const protect = async (req, res, next) => {
   try {
     const decoded = verifyToken(token);
     req.user = await User.findById(decoded.userId).select('-password');
+    if (!req.user) return res.status(401).json({ message: 'User not found' });
+    req.authRole = decoded.role;
     next();
   } catch (err) {
     res.status(401).json({ message: 'Invalid token' });
@@ -37,7 +39,8 @@ const protect = async (req, res, next) => {
 // Check role
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    const role = req.authRole || req.user?.role?.name || req.user?.role;
+    if (!roles.includes(role)) {
       return res.status(403).json({ message: 'Access denied' });
     }
     next();

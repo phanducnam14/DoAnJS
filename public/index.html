@@ -121,8 +121,10 @@
           <nav id="mainMenu" class="main-nav">
             <a href="#/dashboard" data-route="dashboard">Trang chủ</a>
             <a href="#/products" data-route="products">Sản phẩm</a>
+            <a href="#/messages" data-route="messages">Tin nhắn</a>
             <a href="#/favorites" data-route="favorites">Yêu thích</a>
             <a href="#/profile" data-route="profile">Hồ sơ</a>
+            <a href="#/manage-posts" data-route="manage-posts">Quản lý tin đăng</a>
             <a href="#/settings" data-route="settings">Cài đặt</a>
           </nav>
 
@@ -373,6 +375,38 @@
         <div id="favoritesList" class="product-grid"></div>
       </section>
 
+      <section class="page" data-page="messages">
+        <section class="card-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Trao doi</p>
+              <h3>Tin nhan voi nguoi dang tin</h3>
+            </div>
+            <button id="refreshConversationsBtn" type="button" class="btn btn-secondary">Tai lai</button>
+          </div>
+        </section>
+
+        <section class="messages-layout top-space">
+          <article class="card-shell messages-sidebar">
+            <div id="conversationsList" class="messages-list"></div>
+          </article>
+
+          <article class="card-shell messages-thread-shell">
+            <div id="messageThread" class="messages-thread"></div>
+
+            <form id="messageForm" class="message-form top-space">
+              <label class="field span-all">
+                <span>Noi dung tin nhan</span>
+                <textarea id="messageInput" name="content" rows="3" placeholder="Nhap noi dung can trao doi..." required></textarea>
+              </label>
+              <div class="form-actions span-all">
+                <button type="submit" class="btn btn-primary">Gui tin nhan</button>
+              </div>
+            </form>
+          </article>
+        </section>
+      </section>
+
       <section class="page" data-page="profile">
         <div class="profile-layout">
           <section class="card-shell">
@@ -430,6 +464,39 @@
             <div id="profileResult" class="inline-box"></div>
           </section>
         </div>
+      </section>
+
+      <section class="page" data-page="manage-posts">
+        <section class="card-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Quan ly tin dang</p>
+              <h3>Tin cua toi</h3>
+            </div>
+          </div>
+
+          <div class="profile-product-columns">
+            <section class="card-shell nested-card">
+              <div class="section-head section-head-wrap compact-head">
+                <div>
+                  <p class="kicker">Dang hien thi</p>
+                  <h3>Tin dang ban</h3>
+                </div>
+              </div>
+              <div id="myProductsList" class="product-grid compact-grid"></div>
+            </section>
+
+            <section class="card-shell nested-card">
+              <div class="section-head section-head-wrap compact-head">
+                <div>
+                  <p class="kicker">Da chot don</p>
+                  <h3>Hang da ban</h3>
+                </div>
+              </div>
+              <div id="soldProductsList" class="product-grid compact-grid"></div>
+            </section>
+          </div>
+        </section>
       </section>
 
       <section class="page" data-page="settings">

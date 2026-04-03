@@ -28,6 +28,12 @@ const favoritesList = document.getElementById('favoritesList');
 const productDetail = document.getElementById('productDetail');
 const profileSummary = document.getElementById('profileSummary');
 const profileResult = document.getElementById('profileResult');
+const myProductsList = document.getElementById('myProductsList');
+const soldProductsList = document.getElementById('soldProductsList');
+const conversationsList = document.getElementById('conversationsList');
+const messageThread = document.getElementById('messageThread');
+const messageForm = document.getElementById('messageForm');
+const messageInput = document.getElementById('messageInput');
 const sellResult = document.getElementById('sellResult');
 const productFilters = document.getElementById('productFilters');
 const createProductForm = document.getElementById('createProductForm');
@@ -35,6 +41,7 @@ const profileForm = document.getElementById('profileForm');
 const avatarForm = document.getElementById('avatarForm');
 const refreshProductsBtn = document.getElementById('refreshProductsBtn');
 const refreshFavoritesBtn = document.getElementById('refreshFavoritesBtn');
+const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
 const paginationInfo = document.getElementById('paginationInfo');
 const prevPageBtn = document.getElementById('prevPageBtn');
 const nextPageBtn = document.getElementById('nextPageBtn');
@@ -60,6 +67,11 @@ const state = {
   locations: [],
   locationsByProvince: {},
   currentUser: loadUser(),
+  conversations: [],
+  activeConversationId: null,
+  activeConversation: null,
+  messages: [],
+  messagePollTimer: null,
   products: [],
   featuredProducts: [],
   pagination: {
@@ -107,6 +119,7 @@ function setUser(user) {
 }
 
 function clearSession() {
+  stopMessagePolling();
   localStorage.removeItem('token');
   setUser(null);
   updateSessionUI();
@@ -146,6 +159,57 @@ function formatLocation(value) {
   return [value.province, value.district, value.ward].filter(Boolean).join(' - ');
 }
 
+function formatMessageTime(value) {
+  if (!value) return '';
+  return new Date(value).toLocaleString('vi-VN');
+}
+
+function formatRelativeTime(value) {
+  if (!value) return 'Vua dang';
+
+  const now = Date.now();
+  const diff = Math.max(0, now - new Date(value).getTime());
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  if (diff < hour) {
+    const minutes = Math.max(1, Math.floor(diff / minute));
+    return `${minutes} phut truoc`;
+  }
+
+  if (diff < day) {
+    const hours = Math.floor(diff / hour);
+    return `${hours} gio truoc`;
+  }
+
+  const days = Math.floor(diff / day);
+  return `${days} ngay truoc`;
+}
+
+function formatProductChatStatus(value) {
+  const map = {
+    dang_ban: 'Dang ban',
+    da_ban: 'Da ban',
+    da_an: 'Da an'
+  };
+
+  return map[value] || 'Dang ban';
+}
+
+function formatSellingStatus(product) {
+  return product?.isSold ? 'Da ban' : 'Dang ban';
+}
+
+function normalizeAssetPath(value) {
+  return String(value || '').replace(/\\/g, '/');
+}
+
+function getProductImageUrl(product) {
+  const image = product?.images && product.images[0] ? product.images[0].url : '';
+  return image ? `/${normalizeAssetPath(image)}` : '';
+}
+
 function setBanner(element, message, type = 'info') {
   element.textContent = message;
   element.classList.remove('hidden', 'error');
@@ -172,6 +236,7 @@ function buildStateCard(title, text, stateClass) {
   return `
     <div class="${stateClass}">
       <div>
+        <span class="state-eyebrow">Marketplace</span>
         <strong>${escapeHtml(title)}</strong>
         <p>${escapeHtml(text)}</p>
       </div>
@@ -390,30 +455,53 @@ function renderDashboardProducts() {
     return;
   }
 
-  dashboardProducts.innerHTML = state.featuredProducts.map((product) => productCardTemplate(product, false)).join('');
+  dashboardProducts.innerHTML = state.featuredProducts.map((product) => productCardTemplate(product, { allowBoost: false })).join('');
 }
 
-function productCardTemplate(product, allowBoost = true) {
+function productCardTemplate(product, options = {}) {
+  const {
+    allowBoost = true,
+    allowFavorite = true,
+    allowMarkSold = false,
+    markSoldLabel = 'Danh dau da ban'
+  } = options;
+  const imageUrl = getProductImageUrl(product);
+  const sellerName = product.seller?.name || 'Nguoi ban xac minh';
+  const postedTime = formatRelativeTime(product.createdAt);
+
   return `
     <article class="product-card">
-      <div class="product-meta">
-        <span class="meta-tag">${product.isBoosted ? 'Đã boost' : 'Tin thường'}</span>
-        <span class="meta-tag">${escapeHtml(formatCondition(product.condition))}</span>
+      <div class="product-cover">
+        ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(product.title)}" />` : '<div class="product-cover-fallback"><strong>Khong co anh</strong><p>Nguoi ban chua cap nhat hinh minh hoa.</p></div>'}
+        <div class="product-badges">
+          <span class="meta-tag highlight">${product.isBoosted ? 'Noi bat' : 'Tin moi'}</span>
+          <span class="meta-tag">${escapeHtml(formatSellingStatus(product))}</span>
+        </div>
       </div>
-      <div>
-        <h3>${escapeHtml(product.title)}</h3>
-        <p>${escapeHtml(product.description || 'Không có mô tả')}</p>
+      <div class="product-body">
+        <div class="product-meta-row">
+          <span class="product-time">${escapeHtml(postedTime)}</span>
+          <span class="product-seller">${escapeHtml(sellerName)}</span>
+        </div>
+        <div class="product-copy">
+          <h3 class="product-title">${escapeHtml(product.title)}</h3>
+          <p class="product-snippet">${escapeHtml(product.description || 'Khong co mo ta')}</p>
+        </div>
+        <div class="product-price-row">
+          <strong class="price">${formatCurrency(product.price)}</strong>
+          <span class="condition-pill">${escapeHtml(formatCondition(product.condition))}</span>
+        </div>
+        <div class="product-stats">
+          <span class="meta-tag soft">${escapeHtml(formatLocation(product.location))}</span>
+          <span class="meta-tag soft">${product.views || 0} luot xem</span>
+          <span class="meta-tag soft">${product.favoritesCount || 0} luu tin</span>
+        </div>
       </div>
-      <strong class="price">${formatCurrency(product.price)}</strong>
-      <div class="detail-tags">
-        <span class="meta-tag">${escapeHtml(formatLocation(product.location))}</span>
-        <span class="meta-tag">Lượt xem ${product.views || 0}</span>
-        <span class="meta-tag">Yêu thích ${product.favoritesCount || 0}</span>
-      </div>
-      <div class="inline-actions">
-        <button type="button" class="btn btn-primary" data-action="detail" data-id="${product._id}">Xem chi tiết</button>
-        <button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Yêu thích</button>
-        ${allowBoost ? `<button type="button" class="btn btn-secondary" data-action="boost" data-id="${product._id}">Boost tin</button>` : ''}
+      <div class="inline-actions product-actions">
+        <button type="button" class="btn btn-primary" data-action="detail" data-id="${product._id}">Xem nhanh</button>
+        ${allowFavorite ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Luu tin</button>` : ''}
+        ${allowBoost ? `<button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Day len dau</button>` : ''}
+        ${allowMarkSold && !product.isSold ? `<button type="button" class="btn btn-secondary" data-action="mark-sold" data-id="${product._id}">${markSoldLabel}</button>` : ''}
       </div>
     </article>
   `;
@@ -439,29 +527,38 @@ function renderFavorites(items) {
       return buildStateCard('Sản phẩm không còn tồn tại', 'Mục yêu thích này hiện không còn dữ liệu hợp lệ.', 'error-state');
     }
 
-    return productCardTemplate(entry.product, false);
+    return productCardTemplate(entry.product, { allowBoost: false });
   }).join('');
 }
 
 function renderProfile(user) {
   if (!user) {
     profileSummary.innerHTML = buildStateCard('Chưa có dữ liệu người dùng', 'Vui lòng đăng nhập để xem và cập nhật hồ sơ cá nhân.', 'empty-state');
+    myProductsList.innerHTML = buildStateCard('Cần đăng nhập', 'Đăng nhập để xem các tin bạn đã đăng.', 'empty-state');
+    soldProductsList.innerHTML = buildStateCard('Cần đăng nhập', 'Đăng nhập để xem lịch sử hàng đã bán của bạn.', 'empty-state');
     return;
   }
 
   profileSummary.innerHTML = `
-    <div class="avatar-box">
-      ${user.avatar ? `<img src="/${user.avatar}" alt="Ảnh đại diện" />` : '<div class="empty-state"><div><strong>Chưa có avatar</strong><p>Hãy tải ảnh đại diện để hồ sơ trông chuyên nghiệp hơn.</p></div></div>'}
+    <div class="profile-hero">
+      <div class="avatar-box profile-avatar-large">
+        ${user.avatar ? `<img src="/${normalizeAssetPath(user.avatar)}" alt="Ảnh đại diện" />` : '<div class="avatar-fallback">'+escapeHtml((user.name || 'U').slice(0, 1).toUpperCase())+'</div>'}
+      </div>
+      <div class="profile-hero-copy">
+        <span class="kicker">Tai khoan ca nhan</span>
+        <h3>${escapeHtml(user.name || 'Nguoi dung')}</h3>
+        <p>${escapeHtml(user.email || '')}</p>
+        <div class="profile-tags">
+          <span class="meta-tag">${escapeHtml(user.role?.name || 'Nguoi dung')}</span>
+          <span class="meta-tag">${escapeHtml(formatLocation(user.location))}</span>
+        </div>
+      </div>
     </div>
-    <div class="profile-tags">
-      <span class="meta-tag">${escapeHtml(user.role?.name || 'Người dùng')}</span>
-      <span class="meta-tag">${escapeHtml(formatLocation(user.location))}</span>
-    </div>
-    <div class="profile-data">
-      <div class="profile-row"><strong>Họ tên:</strong> ${escapeHtml(user.name || '')}</div>
-      <div class="profile-row"><strong>Email:</strong> ${escapeHtml(user.email || '')}</div>
-      <div class="profile-row"><strong>Số điện thoại:</strong> ${escapeHtml(user.phone || 'Chưa cập nhật')}</div>
-      <div class="profile-row"><strong>Khu vực:</strong> ${escapeHtml(formatLocation(user.location))}</div>
+    <div class="profile-data profile-grid-meta">
+      <div class="profile-row"><strong>Ho ten</strong><span>${escapeHtml(user.name || '')}</span></div>
+      <div class="profile-row"><strong>Email</strong><span>${escapeHtml(user.email || '')}</span></div>
+      <div class="profile-row"><strong>So dien thoai</strong><span>${escapeHtml(user.phone || 'Chua cap nhat')}</span></div>
+      <div class="profile-row"><strong>Khu vuc</strong><span>${escapeHtml(formatLocation(user.location))}</span></div>
     </div>
   `;
 
@@ -478,34 +575,209 @@ function renderProfile(user) {
   });
 }
 
+function getConversationPartner(conversation) {
+  return (conversation.participants || []).find((item) => item._id !== state.currentUser?.id) || null;
+}
+
+function getConversationProductMeta(conversation) {
+  return conversation?.productMeta || {
+    _id: conversation?.product?._id || null,
+    title: conversation?.productSnapshot?.title || conversation?.product?.title || 'San pham khong xac dinh',
+    price: conversation?.productSnapshot?.price ?? conversation?.product?.price ?? null,
+    imageUrl: normalizeAssetPath(conversation?.productSnapshot?.imageUrl || ''),
+    status: conversation?.productSnapshot?.status || 'dang_ban',
+    available: Boolean(conversation?.product?._id)
+  };
+}
+
+function renderProductBanner(meta, { compact = false, clickable = false } = {}) {
+  const classes = compact ? 'product-chat-banner compact' : 'product-chat-banner';
+  const image = meta.imageUrl
+    ? `<img src="/${normalizeAssetPath(meta.imageUrl)}" alt="${escapeHtml(meta.title)}" />`
+    : '<div class="product-chat-placeholder">Khong co anh</div>';
+  const content = `
+    <div class="${classes}">
+      <div class="product-chat-thumb">${image}</div>
+      <div class="product-chat-copy">
+        <strong>${escapeHtml(meta.title)}</strong>
+        <p>${escapeHtml(formatCurrency(meta.price))}</p>
+        <span class="status-tag">${escapeHtml(formatProductChatStatus(meta.status))}</span>
+      </div>
+    </div>
+  `;
+
+  if (clickable && meta.available && meta._id) {
+    return `<a href="#/product/${meta._id}" class="product-chat-link">${content}</a>`;
+  }
+
+  if (!meta.available) {
+    return `${content}<p class="muted-note">San pham hien khong con hien thi, nhung cuoc tro chuyen van duoc luu.</p>`;
+  }
+
+  return content;
+}
+
+function stopMessagePolling() {
+  if (!state.messagePollTimer) return;
+  clearInterval(state.messagePollTimer);
+  state.messagePollTimer = null;
+}
+
+function startMessagePolling() {
+  stopMessagePolling();
+  if (!state.activeConversationId) return;
+
+  state.messagePollTimer = window.setInterval(() => {
+    if (normalizeRoute().name !== 'messages' || !state.activeConversationId) {
+      stopMessagePolling();
+      return;
+    }
+
+    loadConversationMessages(state.activeConversationId, { silent: true }).catch(() => null);
+    loadConversations({ silent: true }).catch(() => null);
+  }, 5000);
+}
+
+function renderMyProducts(items) {
+  const activeItems = items.filter((product) => !product.isSold);
+  const soldItems = items.filter((product) => product.isSold);
+
+  if (!activeItems.length) {
+    myProductsList.innerHTML = buildStateCard('Chưa có tin đăng', 'Bạn chưa đăng sản phẩm nào. Hãy tạo tin mới để bắt đầu bán hàng.', 'empty-state');
+  } else {
+    myProductsList.innerHTML = activeItems.map((product) => productCardTemplate(product, {
+      allowFavorite: false,
+      allowMarkSold: true,
+      markSoldLabel: 'Da ban ngoai kenh'
+    })).join('');
+  }
+
+  if (!soldItems.length) {
+    soldProductsList.innerHTML = buildStateCard('Chua co hang da ban', 'Khi ban danh dau mot tin la da ban, san pham se duoc luu tai day va an khoi trang san pham.', 'empty-state');
+    return;
+  }
+
+  soldProductsList.innerHTML = soldItems.map((product) => productCardTemplate(product, {
+    allowBoost: false,
+    allowFavorite: false
+  })).join('');
+}
+
+function renderConversations(items) {
+  if (!items.length) {
+    conversationsList.innerHTML = buildStateCard('Chưa có cuộc trò chuyện', 'Hãy bắt đầu nhắn tin từ trang chi tiết sản phẩm để trao đổi với người bán.', 'empty-state');
+    return;
+  }
+
+  conversationsList.innerHTML = items.map((conversation) => {
+    const partner = getConversationPartner(conversation);
+    const lastMessage = conversation.lastMessage?.content || 'Chưa có tin nhắn';
+    const productMeta = getConversationProductMeta(conversation);
+    const lastTime = conversation.lastMessage?.createdAt ? formatRelativeTime(conversation.lastMessage.createdAt) : 'Moi tao';
+    return `
+      <button type="button" class="conversation-item ${state.activeConversationId === conversation._id ? 'active' : ''}" data-action="open-conversation" data-id="${conversation._id}">
+        ${renderProductBanner(productMeta, { compact: true })}
+        <div class="conversation-top">
+          <strong>${escapeHtml(partner?.name || 'Người dùng')}</strong>
+          <span class="conversation-time">${escapeHtml(lastTime)}</span>
+        </div>
+        <div class="conversation-top conversation-submeta">
+          <span class="conversation-partner-role">Trao doi mua ban</span>
+          ${conversation.unreadCount ? `<span class="status-tag unread-pill">${conversation.unreadCount} moi</span>` : ''}
+        </div>
+        <p>${escapeHtml(lastMessage)}</p>
+      </button>
+    `;
+  }).join('');
+}
+
+function renderMessageThread() {
+  if (!state.activeConversation) {
+    messageThread.innerHTML = buildStateCard('Chọn một cuộc trò chuyện', 'Mở một hội thoại để xem lịch sử tin nhắn và tiếp tục trao đổi.', 'empty-state');
+    messageForm.classList.add('hidden');
+    return;
+  }
+
+  const partner = getConversationPartner(state.activeConversation);
+  const productMeta = getConversationProductMeta(state.activeConversation);
+  const header = `
+    <div class="messages-thread-head">
+      ${renderProductBanner(productMeta, { clickable: true })}
+      <div>
+        <strong>${escapeHtml(partner?.name || 'Người dùng')}</strong>
+        <p>Trao doi truc tiep de chot don nhanh hon</p>
+      </div>
+    </div>
+  `;
+
+  const body = state.messages.length
+    ? state.messages.map((message) => {
+      const isOwn = message.sender?._id === state.currentUser?.id;
+      return `
+        <article class="message-bubble ${isOwn ? 'own' : ''}">
+          <strong>${escapeHtml(message.sender?.name || 'Người dùng')}</strong>
+          <p>${escapeHtml(message.content)}</p>
+          <span>${escapeHtml(formatMessageTime(message.createdAt))}${isOwn ? ` • ${message.isRead ? 'Da doc' : 'Chua doc'}` : ''}</span>
+        </article>
+      `;
+    }).join('')
+    : buildStateCard('Chưa có tin nhắn', 'Hãy gửi tin đầu tiên để bắt đầu trao đổi.', 'empty-state');
+
+  messageThread.innerHTML = `${header}<div class="message-bubbles">${body}</div>`;
+  messageForm.classList.remove('hidden');
+}
+
 function renderProductDetail(product) {
-  const imageUrl = product.images && product.images[0] ? `/${product.images[0].url}` : '';
+  const imageUrl = product.images && product.images[0] ? `/${normalizeAssetPath(product.images[0].url)}` : '';
+  const canMessageSeller = state.currentUser && product.seller?._id !== state.currentUser.id;
+  const sellerName = product.seller?.name || 'Nguoi ban xac minh';
 
   productDetail.innerHTML = `
     <div class="product-detail-layout">
-      <div class="media-box">
-        ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(product.title)}" />` : '<div class="empty-state"><div><strong>Chưa có hình ảnh</strong><p>Sản phẩm này chưa được cập nhật ảnh minh họa.</p></div></div>'}
+      <div class="detail-gallery-shell">
+        <div class="media-box detail-gallery-main">
+          ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(product.title)}" />` : '<div class="product-cover-fallback"><strong>Khong co anh</strong><p>San pham nay chua duoc cap nhat hinh minh hoa.</p></div>'}
+        </div>
+        <div class="detail-mini-meta">
+          <span class="meta-tag highlight">${product.isBoosted ? 'Tin duoc de xuat' : 'Tin dang hien thi'}</span>
+          <span class="meta-tag">${escapeHtml(formatSellingStatus(product))}</span>
+          <span class="meta-tag">${escapeHtml(formatCondition(product.condition))}</span>
+        </div>
       </div>
       <div class="detail-content">
-        <div class="detail-tags">
-          <span class="meta-tag">${product.isBoosted ? 'Đã boost' : 'Tin thường'}</span>
-          <span class="meta-tag">${escapeHtml(formatCondition(product.condition))}</span>
-          <span class="meta-tag">${escapeHtml(formatLocation(product.location))}</span>
-        </div>
-        <div>
+        <div class="detail-heading">
+          <span class="kicker">Tin dang premium</span>
           <h2>${escapeHtml(product.title)}</h2>
           <p>${escapeHtml(product.description || '')}</p>
         </div>
-        <strong class="price">${formatCurrency(product.price)}</strong>
-        <div class="profile-data">
-          <div class="profile-row"><strong>Người bán:</strong> ${escapeHtml(product.seller?.name || 'Không rõ')}</div>
-          <div class="profile-row"><strong>Lượt xem:</strong> ${product.views || 0}</div>
-          <div class="profile-row"><strong>Lượt yêu thích:</strong> ${product.favoritesCount || 0}</div>
+        <div class="detail-price-row">
+          <strong class="price price-xl">${formatCurrency(product.price)}</strong>
+          <span class="detail-time">${escapeHtml(formatRelativeTime(product.createdAt))}</span>
         </div>
-        <div class="inline-actions">
-          <button type="button" class="btn btn-primary" data-action="favorite" data-id="${product._id}">Yêu thích</button>
-          <button type="button" class="btn btn-secondary" data-action="boost" data-id="${product._id}">Boost tin</button>
-          <a href="#/products" class="btn btn-secondary">Quay lại danh sách</a>
+        <div class="detail-tags">
+          <span class="meta-tag soft">${escapeHtml(formatLocation(product.location))}</span>
+          <span class="meta-tag soft">${product.views || 0} luot xem</span>
+          <span class="meta-tag soft">${product.favoritesCount || 0} luu tin</span>
+        </div>
+        <div class="detail-seller-card">
+          <div class="detail-seller-head">
+            <div class="seller-avatar-mini">${escapeHtml(sellerName.slice(0, 1).toUpperCase())}</div>
+            <div>
+              <strong>${escapeHtml(sellerName)}</strong>
+              <p>Nguoi dang tin dang hoat dong</p>
+            </div>
+          </div>
+          <div class="profile-data compact-data">
+            <div class="profile-row"><strong>So dien thoai lien he</strong><span>${escapeHtml(product.seller?.phone || 'Dang cap nhat')}</span></div>
+            <div class="profile-row"><strong>Khu vuc</strong><span>${escapeHtml(formatLocation(product.location))}</span></div>
+            <div class="profile-row"><strong>Tinh trang</strong><span>${escapeHtml(formatCondition(product.condition))}</span></div>
+          </div>
+        </div>
+        <div class="inline-actions detail-actions">
+          ${canMessageSeller ? `<button type="button" class="btn btn-primary btn-cta" data-action="start-conversation" data-id="${product._id}">Nhan tin nguoi ban</button>` : ''}
+          <button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Luu tin nay</button>
+          <button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Day tin</button>
+          <a href="#/products" class="btn btn-secondary">Quay lai danh sach</a>
         </div>
       </div>
     </div>
@@ -586,6 +858,92 @@ async function loadProfile() {
   renderProfile(user);
 }
 
+async function loadMyProducts() {
+  if (!isAuthenticated()) {
+    myProductsList.innerHTML = buildStateCard('Cần đăng nhập', 'Đăng nhập để xem các tin bạn đã đăng.', 'empty-state');
+    soldProductsList.innerHTML = buildStateCard('Cần đăng nhập', 'Đăng nhập để xem lịch sử hàng đã bán của bạn.', 'empty-state');
+    return;
+  }
+
+  myProductsList.innerHTML = buildStateCard('Đang tải tin của bạn', 'Hệ thống đang lấy danh sách sản phẩm bạn đã đăng.', 'loading-state');
+  soldProductsList.innerHTML = buildStateCard('Dang tai lich su da ban', 'He thong dang dong bo danh sach cac tin da duoc danh dau la da ban.', 'loading-state');
+  const response = await apiFetch('/api/products/mine');
+  renderMyProducts(response.data || []);
+}
+
+async function markProductAsSold(productId) {
+  await apiFetch(`/api/products/${productId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isSold: true })
+  });
+
+  setBanner(globalMessage, 'San pham da duoc danh dau la da ban va khong con hien tren trang san pham.');
+
+  await Promise.all([
+    loadMyProducts(),
+    loadProducts().catch(() => null),
+    loadDashboardProducts().catch(() => null),
+    loadFavorites().catch(() => null)
+  ]);
+}
+
+async function loadConversations({ silent = false } = {}) {
+  if (!isAuthenticated()) {
+    conversationsList.innerHTML = buildStateCard('Cần đăng nhập', 'Đăng nhập để xem các cuộc trò chuyện của bạn.', 'empty-state');
+    messageThread.innerHTML = buildStateCard('Cần đăng nhập', 'Đăng nhập để xem nội dung tin nhắn.', 'empty-state');
+    messageForm.classList.add('hidden');
+    return;
+  }
+
+  if (!silent) {
+    conversationsList.innerHTML = buildStateCard('Đang tải hội thoại', 'Hệ thống đang lấy danh sách cuộc trò chuyện của bạn.', 'loading-state');
+  }
+
+  const response = await apiFetch('/api/conversations');
+  state.conversations = response.data || [];
+
+  if (state.activeConversationId && !state.conversations.some((item) => item._id === state.activeConversationId)) {
+    state.activeConversationId = null;
+    state.activeConversation = null;
+    state.messages = [];
+  }
+
+  renderConversations(state.conversations);
+  if (state.activeConversationId) {
+    const current = state.conversations.find((item) => item._id === state.activeConversationId);
+    if (current) state.activeConversation = current;
+    renderMessageThread();
+  }
+}
+
+async function loadConversationMessages(conversationId, { silent = false } = {}) {
+  if (!silent) {
+    messageThread.innerHTML = buildStateCard('Đang tải tin nhắn', 'Hệ thống đang tải lịch sử trao đổi.', 'loading-state');
+  }
+
+  const response = await apiFetch(`/api/conversations/${conversationId}/messages`);
+  state.activeConversation = response.data.conversation;
+  state.activeConversationId = response.data.conversation._id;
+  state.messages = response.data.messages || [];
+  renderConversations(state.conversations);
+  renderMessageThread();
+}
+
+async function startConversation(productId) {
+  const response = await apiFetch('/api/conversations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ productId })
+  });
+
+  state.activeConversationId = response.data._id;
+  window.location.hash = '#/messages';
+  await loadConversations();
+  await loadConversationMessages(response.data._id);
+  startMessagePolling();
+}
+
 async function loadProductDetail(id) {
   productDetail.innerHTML = buildStateCard('Đang tải chi tiết sản phẩm', 'Vui lòng chờ để hệ thống hiển thị đầy đủ thông tin sản phẩm.', 'loading-state');
   const response = await apiFetch(`/api/products/${id}`);
@@ -610,7 +968,7 @@ function normalizeRoute() {
     return { name: 'auth' };
   }
 
-  const allowedRoutes = ['dashboard', 'products', 'favorites', 'profile', 'settings', 'sell'];
+  const allowedRoutes = ['dashboard', 'products', 'messages', 'favorites', 'profile', 'manage-posts', 'settings', 'sell'];
   return { name: allowedRoutes.includes(cleanHash) ? cleanHash : 'dashboard' };
 }
 
@@ -629,9 +987,11 @@ async function renderRoute() {
   const titleMap = {
     dashboard: 'Trang chủ',
     products: 'Sản phẩm',
+    messages: 'Tin nhắn',
     'product-detail': 'Chi tiết sản phẩm',
     favorites: 'Yêu thích',
     profile: 'Hồ sơ cá nhân',
+    'manage-posts': 'Quản lý tin đăng',
     settings: 'Cài đặt',
     sell: 'Đăng tin mới'
   };
@@ -657,8 +1017,22 @@ async function renderRoute() {
     if (route.name === 'favorites') {
       await loadFavorites();
     }
+    if (route.name === 'messages') {
+      await loadConversations();
+      if (state.activeConversationId) {
+        await loadConversationMessages(state.activeConversationId);
+      } else {
+        renderMessageThread();
+      }
+      startMessagePolling();
+    } else {
+      stopMessagePolling();
+    }
     if (route.name === 'profile') {
       await loadProfile();
+    }
+    if (route.name === 'manage-posts') {
+      await loadMyProducts();
     }
     if (route.name === 'product-detail' && route.id) {
       await loadProductDetail(route.id);
@@ -737,6 +1111,18 @@ document.addEventListener('click', async (event) => {
     if (action === 'boost') {
       await boostProduct(id);
     }
+    if (action === 'mark-sold') {
+      await markProductAsSold(id);
+    }
+    if (action === 'start-conversation') {
+      await startConversation(id);
+    }
+    if (action === 'open-conversation') {
+      state.activeConversationId = id;
+      await loadConversationMessages(id);
+      await loadConversations({ silent: true });
+      startMessagePolling();
+    }
   } catch (error) {
     setBanner(globalMessage, error.message, 'error');
   }
@@ -814,6 +1200,10 @@ refreshProductsBtn.addEventListener('click', () => {
 
 refreshFavoritesBtn.addEventListener('click', () => {
   loadFavorites().catch((error) => setBanner(globalMessage, error.message, 'error'));
+});
+
+refreshConversationsBtn.addEventListener('click', () => {
+  loadConversations().catch((error) => setBanner(globalMessage, error.message, 'error'));
 });
 
 prevPageBtn.addEventListener('click', async () => {
@@ -896,6 +1286,33 @@ avatarForm.addEventListener('submit', async (event) => {
     setInlineBox(profileResult, 'Tải avatar thành công.');
   } catch (error) {
     setInlineBox(profileResult, error.message, 'error');
+  }
+});
+
+messageForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!state.activeConversationId) {
+    setBanner(globalMessage, 'Hãy chọn một cuộc trò chuyện trước khi gửi tin nhắn.', 'error');
+    return;
+  }
+
+  const content = messageInput.value.trim();
+  if (!content) {
+    setBanner(globalMessage, 'Nội dung tin nhắn không được để trống.', 'error');
+    return;
+  }
+
+  try {
+    await apiFetch(`/api/conversations/${state.activeConversationId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    });
+    messageForm.reset();
+    await loadConversationMessages(state.activeConversationId, { silent: true });
+    await loadConversations({ silent: true });
+  } catch (error) {
+    setBanner(globalMessage, error.message, 'error');
   }
 });
 

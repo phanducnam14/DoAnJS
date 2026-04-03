@@ -8,6 +8,9 @@ const messageSchema = new mongoose.Schema({
   isRead: { type: Boolean, default: false }
 }, { timestamps: true });
 
+messageSchema.index({ conversation: 1, createdAt: 1 });
+messageSchema.index({ receiver: 1, isRead: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Message', messageSchema);
 
 

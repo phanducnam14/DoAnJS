@@ -150,12 +150,30 @@ const seedCategories = async () => {
 
 const seedSubCategories = async () => {
   const phoneCat = await Category.findOne({ slug: 'dien-thoai' });
-  const laptopCat = await Category.findOne({ slug: 'laptop' });
-  const subIphone = await SubCategory.create({ name: 'iPhone', category: phoneCat._id });
-  const subAndroid = await SubCategory.create({ name: 'Android', category: phoneCat._id });
-  const subMac = await SubCategory.create({ name: 'MacBook', category: laptopCat._id });
+  const computerCat = await Category.findOne({ slug: 'may-tinh' });
+
+  if (!phoneCat || !computerCat) {
+    throw new Error('Seed categories are missing');
+  }
+
+  const subIphone = await SubCategory.findOneAndUpdate(
+    { slug: 'iphone', category: phoneCat._id },
+    { name: 'iPhone', category: phoneCat._id },
+    { upsert: true, new: true, runValidators: true }
+  );
+  const subAndroid = await SubCategory.findOneAndUpdate(
+    { slug: 'android', category: phoneCat._id },
+    { name: 'Android', category: phoneCat._id },
+    { upsert: true, new: true, runValidators: true }
+  );
+  const subMac = await SubCategory.findOneAndUpdate(
+    { slug: 'macbook', category: computerCat._id },
+    { name: 'MacBook', category: computerCat._id },
+    { upsert: true, new: true, runValidators: true }
+  );
+
   await Category.findByIdAndUpdate(phoneCat._id, { $addToSet: { subCategories: { $each: [subIphone._id, subAndroid._id] } } });
-  await Category.findByIdAndUpdate(laptopCat._id, { $addToSet: { subCategories: subMac._id } });
+  await Category.findByIdAndUpdate(computerCat._id, { $addToSet: { subCategories: subMac._id } });
 };
 
 const seedLocations = async () => {
@@ -173,22 +191,12 @@ const seedLocations = async () => {
 const seedProducts = async () => {
   const seller = await User.findOne({ email: 'user@test.com' });
   const category = await Category.findOne({ slug: 'dien-thoai' });
-<<<<<<< HEAD
   const subCategory = await SubCategory.findOne({ slug: 'iphone' });
-  const location = await Location.findOne({ province: 'Hà Nội' });
-
-  await Product.create({
-    title: 'iPhone 15 Pro Max like new',
-    description: 'Bán iPhone 15 Pro Max 256GB màu đen, 99%',
-    price: 25000000,
-    condition: 'like_new',
-    category: category._id,
-    subCategory: subCategory._id,
-    location: location._id,
-    seller: seller._id
-  });
-=======
   const location = await Location.findOne({ province: 'Hà Nội', district: 'Ba Đình' });
+
+  if (!seller || !category || !subCategory || !location) {
+    throw new Error('Seed product dependencies are missing');
+  }
 
   await Product.updateOne(
     { title: 'iPhone 15 Pro Max like new', seller: seller._id },
@@ -198,12 +206,12 @@ const seedProducts = async () => {
       price: 25000000,
       condition: 'like_new',
       category: category._id,
+      subCategory: subCategory._id,
       location: location._id,
       seller: seller._id
     },
     { upsert: true }
   );
->>>>>>> 24799fc (Add frontend & fix cate)
 };
 
 const seedData = async () => {
