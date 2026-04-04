@@ -171,6 +171,27 @@ test('createConversation rejects starting chat on own product', async () => {
   }
 });
 
+test('createConversation rejects pending or hidden products', async () => {
+  const originalFindById = Product.findById;
+  Product.findById = () => ({
+    select() {
+      return this;
+    },
+    populate: async () => ({ _id: 'product-1', seller: 'seller-1', title: 'Hidden Product', images: [], isHidden: true, status: 'pending' })
+  });
+
+  const req = { user: { id: 'buyer-1' }, body: { productId: '507f1f77bcf86cd799439011' } };
+  const res = createRes();
+
+  try {
+    await controller.createConversation(req, res);
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.payload.message, 'Product is not available for conversation');
+  } finally {
+    Product.findById = originalFindById;
+  }
+});
+
 test('sendMessage rejects users outside the conversation', async () => {
   const originalFindById = Conversation.findById;
   Conversation.findById = async () => ({ _id: 'conv-1', participants: [{ _id: 'user-2' }, { _id: 'user-3' }] });

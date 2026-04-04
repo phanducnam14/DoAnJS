@@ -27,8 +27,9 @@ const protect = async (req, res, next) => {
   if (!token) return res.status(401).json({ message: 'Not authorized' });
   try {
     const decoded = verifyToken(token);
-    req.user = await User.findById(decoded.userId).select('-password');
+    req.user = await User.findById(decoded.userId).select('-password').populate('role');
     if (!req.user) return res.status(401).json({ message: 'User not found' });
+    if (req.user.isBanned) return res.status(403).json({ message: 'Account banned' });
     req.authRole = decoded.role;
     next();
   } catch (err) {
@@ -39,7 +40,7 @@ const protect = async (req, res, next) => {
 // Check role
 const authorize = (...roles) => {
   return (req, res, next) => {
-    const role = req.authRole || req.user?.role?.name || req.user?.role;
+    const role = req.user?.role?.name || req.user?.role || req.authRole;
     if (!roles.includes(role)) {
       return res.status(403).json({ message: 'Access denied' });
     }
@@ -47,5 +48,13 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { signTokens, verifyToken, protect, authorize };
+const optionalProtect = async (req, res, next) => {
+  if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer')) {
+    return next();
+  }
+
+  return protect(req, res, next);
+};
+
+module.exports = { signTokens, verifyToken, protect, optionalProtect, authorize };
 

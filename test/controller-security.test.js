@@ -75,7 +75,14 @@ test('updateProfile only forwards safe fields and strips password from response'
 });
 
 test('updateProduct only forwards editable fields', async () => {
+  const originalFindOne = Product.findOne;
   const originalFindOneAndUpdate = Product.findOneAndUpdate;
+
+  Product.findOne = async () => ({
+    _id: 'product-1',
+    seller: 'user-1',
+    status: 'pending'
+  });
 
   Product.findOneAndUpdate = (query, updates) => {
     assert.deepEqual(query, { _id: 'product-1', seller: 'user-1' });
@@ -111,6 +118,53 @@ test('updateProduct only forwards editable fields', async () => {
     assert.equal(res.payload.data.isBoosted, false);
     assert.equal(res.payload.data.title, 'New title');
   } finally {
+    Product.findOne = originalFindOne;
+    Product.findOneAndUpdate = originalFindOneAndUpdate;
+  }
+});
+
+test('updateProduct resets moderation when approved content changes', async () => {
+  const originalFindOne = Product.findOne;
+  const originalFindOneAndUpdate = Product.findOneAndUpdate;
+
+  Product.findOne = async () => ({
+    _id: 'product-1',
+    seller: 'user-1',
+    status: 'approved'
+  });
+
+  Product.findOneAndUpdate = (query, updates) => {
+    assert.deepEqual(query, { _id: 'product-1', seller: 'user-1' });
+    assert.deepEqual(updates, {
+      title: 'Updated title',
+      status: 'pending',
+      approvedAt: null,
+      approvedBy: null,
+      isHidden: false
+    });
+
+    return {
+      populate: async () => ({
+        _id: 'product-1',
+        title: 'Updated title',
+        status: 'pending'
+      })
+    };
+  };
+
+  const req = {
+    params: { id: 'product-1' },
+    user: { id: 'user-1' },
+    body: { title: 'Updated title' }
+  };
+  const res = createRes();
+
+  try {
+    await productController.updateProduct[1](req, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.payload.data.status, 'pending');
+  } finally {
+    Product.findOne = originalFindOne;
     Product.findOneAndUpdate = originalFindOneAndUpdate;
   }
 });
