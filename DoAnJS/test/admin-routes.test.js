@@ -1,0 +1,109 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const createApp = require('../app');
+const User = require('../schemas/User');
+const { request } = require('../support/http');
+const { signTokens } = require('../utils/jwt');
+
+test('GET /api/admin/dashboard rejects unauthenticated requests', async () => {
+  const app = createApp();
+  const response = await request(app, { path: '/api/admin/dashboard' });
+
+  assert.equal(response.statusCode, 401);
+  assert.deepEqual(response.json, { message: 'Not authorized' });
+});
+
+test('GET /api/admin/dashboard rejects authenticated non-admin users', async () => {
+  const originalFindById = User.findById;
+  const { accessToken } = signTokens('user-1', 'user');
+
+  User.findById = () => ({
+    select() {
+      return this;
+    },
+    populate: async () => ({ _id: 'user-1', role: { name: 'user' }, isBanned: false })
+  });
+
+  try {
+    const app = createApp();
+    const response = await request(app, {
+      path: '/api/admin/dashboard',
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+
+    assert.equal(response.statusCode, 403);
+    assert.deepEqual(response.json, { message: 'Access denied' });
+  } finally {
+    User.findById = originalFindById;
+  }
+});
+
+test('PUT /api/admin/products/:id/reject rejects unauthenticated requests', async () => {
+  const app = createApp();
+  const response = await request(app, {
+    path: '/api/admin/products/507f1f77bcf86cd799439011/reject',
+    method: 'PUT'
+  });
+
+  assert.equal(response.statusCode, 401);
+  assert.deepEqual(response.json, { message: 'Not authorized' });
+});
+
+test('PUT /api/admin/products/:id/hide rejects authenticated non-admin users', async () => {
+  const originalFindById = User.findById;
+  const { accessToken } = signTokens('user-1', 'user');
+
+  User.findById = () => ({
+    select() {
+      return this;
+    },
+    populate: async () => ({ _id: 'user-1', role: { name: 'user' }, isBanned: false })
+  });
+
+  try {
+    const app = createApp();
+    const response = await request(app, {
+      path: '/api/admin/products/507f1f77bcf86cd799439011/hide',
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+
+    assert.equal(response.statusCode, 403);
+    assert.deepEqual(response.json, { message: 'Access denied' });
+  } finally {
+    User.findById = originalFindById;
+  }
+});
+
+test('PUT /api/admin/products/:id/unhide rejects authenticated non-admin users', async () => {
+  const originalFindById = User.findById;
+  const { accessToken } = signTokens('user-1', 'user');
+
+  User.findById = () => ({
+    select() {
+      return this;
+    },
+    populate: async () => ({ _id: 'user-1', role: { name: 'user' }, isBanned: false })
+  });
+
+  try {
+    const app = createApp();
+    const response = await request(app, {
+      path: '/api/admin/products/507f1f77bcf86cd799439011/unhide',
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+
+    assert.equal(response.statusCode, 403);
+    assert.deepEqual(response.json, { message: 'Access denied' });
+  } finally {
+    User.findById = originalFindById;
+  }
+});
