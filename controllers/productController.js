@@ -1,11 +1,5 @@
 // Product Controller - Full CRUD, search/filter/boost
 
-<<<<<<< HEAD
-const Product = require('../schemas/Product');
-const Location = require('../schemas/Location');
-const { protect, authorize } = require('../utils/jwt');
-const { uploadImages } = require('../utils/upload');
-=======
 const fs = require('fs/promises');
 const path = require('path');
 
@@ -13,7 +7,6 @@ const Product = require('../schemas/Product');
 const Location = require('../schemas/Location');
 const { protect } = require('../utils/jwt');
 const { uploadImages, uploadProductImages } = require('../utils/upload');
->>>>>>> f380d9a (edit picture/duyet)
 const Image = require('../schemas/Image');
 
 const PRODUCT_UPDATE_FIELDS = ['title', 'description', 'price', 'condition', 'category', 'subCategory', 'location', 'isSold'];
@@ -22,17 +15,25 @@ const normalizeFilePath = (filePath) => String(filePath || '').replace(/\\/g, '/
 const isAdminRequest = (req) => (req.authRole || req.user?.role?.name || req.user?.role) === 'admin';
 const buildPublicProductQuery = () => ({ isSold: false, status: 'approved', isHidden: false });
 const MODERATION_RESET_FIELDS = ['title', 'description', 'price', 'condition', 'category', 'subCategory', 'location'];
-<<<<<<< HEAD
-=======
 const MAX_PRODUCT_IMAGES = 10;
->>>>>>> f380d9a (edit picture/duyet)
+
+const clearModerationState = (updates) => {
+  updates.status = 'pending';
+  updates.isHidden = false;
+  updates.approvedAt = null;
+  updates.approvedBy = null;
+  updates.rejectedAt = null;
+  updates.rejectedBy = null;
+  updates.rejectionReason = '';
+  updates.hiddenAt = null;
+  updates.hiddenBy = null;
+  updates.hiddenReason = '';
+};
 
 const pickAllowedFields = (payload, allowedFields) => Object.fromEntries(
   Object.entries(payload || {}).filter(([key, value]) => allowedFields.includes(key) && value !== undefined)
 );
 
-<<<<<<< HEAD
-=======
 const parseStringArray = (value) => {
   if (Array.isArray(value)) {
     return value.map((item) => String(item || '').trim()).filter(Boolean);
@@ -92,19 +93,13 @@ const deleteImageDocuments = async (images) => {
   await removeImageFiles(images);
 };
 
->>>>>>> f380d9a (edit picture/duyet)
 // @desc Create product
 // @route POST /api/products
 exports.createProduct = [protect, uploadImages, async (req, res, next) => {
   try {
     const { title, description, price, condition, category, subCategory, location } = req.body;
     const files = req.files || [];
-<<<<<<< HEAD
-    const images = files.map(file => new Image({ url: normalizeFilePath(file.path), product: null, user: req.user.id }));
-    if (images.length > 0) await Image.insertMany(images);
-=======
     const images = await createImageDocuments(files, null, req.user.id);
->>>>>>> f380d9a (edit picture/duyet)
 
     const product = await Product.create({
       title, description, price, condition, category, subCategory, location,
@@ -113,8 +108,6 @@ exports.createProduct = [protect, uploadImages, async (req, res, next) => {
       images: images.map(img => img._id)
     });
 
-<<<<<<< HEAD
-=======
     if (images.length > 0) {
       await Image.updateMany(
         { _id: { $in: images.map((image) => image._id) } },
@@ -122,7 +115,6 @@ exports.createProduct = [protect, uploadImages, async (req, res, next) => {
       );
     }
 
->>>>>>> f380d9a (edit picture/duyet)
     res.status(201).json({ success: true, data: product });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -204,20 +196,6 @@ exports.getMyProducts = [protect, async (req, res, next) => {
 }];
 
 // @desc Update product (seller only)
-<<<<<<< HEAD
-exports.updateProduct = [protect, async (req, res, next) => {
-  try {
-    const updates = pickAllowedFields(req.body, PRODUCT_UPDATE_FIELDS);
-    if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ message: 'No valid product fields provided' });
-    }
-
-    const existingProduct = await Product.findOne({ _id: req.params.id, seller: req.user.id });
-    if (!existingProduct) return res.status(404).json({ message: 'Product not found or not owner' });
-
-    const shouldResetModeration = existingProduct.status === 'approved'
-      && Object.keys(updates).some((field) => MODERATION_RESET_FIELDS.includes(field));
-=======
 exports.updateProduct = [protect, uploadProductImages, async (req, res, next) => {
   let createdImages = [];
   try {
@@ -281,27 +259,17 @@ exports.updateProduct = [protect, uploadProductImages, async (req, res, next) =>
       updates.images = nextImageIds;
     }
 
-    const shouldResetModeration = existingProduct.status === 'approved'
+    const shouldResetModeration = (existingProduct.status !== 'pending' || existingProduct.isHidden)
       && (Object.keys(updates).some((field) => MODERATION_RESET_FIELDS.includes(field)) || hasImageChanges);
->>>>>>> f380d9a (edit picture/duyet)
 
     if (shouldResetModeration) {
-      updates.status = 'pending';
-      updates.approvedAt = null;
-      updates.approvedBy = null;
-      updates.isHidden = false;
+      clearModerationState(updates);
     }
 
     const product = await Product.findOneAndUpdate(
       { _id: req.params.id, seller: req.user.id },
       updates,
       { new: true, runValidators: true }
-<<<<<<< HEAD
-    ).populate('category subCategory location');
-    if (!product) return res.status(404).json({ message: 'Product not found or not owner' });
-    res.json({ success: true, data: product });
-  } catch (err) {
-=======
     )
       .populate('seller', PUBLIC_SELLER_FIELDS)
       .populate('category subCategory location images');
@@ -315,7 +283,6 @@ exports.updateProduct = [protect, uploadProductImages, async (req, res, next) =>
     if (createdImages.length > 0) {
       await deleteImageDocuments(createdImages);
     }
->>>>>>> f380d9a (edit picture/duyet)
     res.status(500).json({ message: err.message });
   }
 }];
@@ -336,6 +303,9 @@ exports.boostProduct = [protect, async (req, res, next) => {
   try {
     const product = await Product.findOne({ _id: req.params.id, seller: req.user.id });
     if (!product) return res.status(404).json({ message: 'Product not found' });
+    if (product.status !== 'approved' || product.isHidden || product.isSold) {
+      return res.status(400).json({ message: 'Only public active products can be boosted' });
+    }
     product.isBoosted = true;
     product.boostedUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
     await product.save();
@@ -344,7 +314,3 @@ exports.boostProduct = [protect, async (req, res, next) => {
     res.status(500).json({ message: err.message });
   }
 }];
-<<<<<<< HEAD
-
-=======
->>>>>>> f380d9a (edit picture/duyet)

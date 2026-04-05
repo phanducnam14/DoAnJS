@@ -254,6 +254,18 @@ function formatSellingStatus(product) {
   return product?.isSold ? 'Đã bán' : 'Đang bán';
 }
 
+function getModerationReason(product) {
+  if (product?.isHidden && product?.hiddenReason) {
+    return String(product.hiddenReason).trim();
+  }
+
+  if (String(product?.status || '').toLowerCase() === 'rejected' && product?.rejectionReason) {
+    return String(product.rejectionReason).trim();
+  }
+
+  return '';
+}
+
 function normalizeSessionUser(user) {
   if (!user) return null;
 
@@ -325,8 +337,6 @@ function getObjectId(value) {
   return value?._id || value?.id || value || '';
 }
 
-<<<<<<< HEAD
-=======
 function getProductOwnerId(product) {
   return getObjectId(product?.seller);
 }
@@ -335,7 +345,6 @@ function isOwnedByCurrentUser(product) {
   return Boolean(state.currentUser?.id) && getProductOwnerId(product) === state.currentUser.id;
 }
 
->>>>>>> f380d9a (edit picture/duyet)
 function getUserLabel(user) {
   return user?.name || user?.fullName || user?.email || 'Người dùng';
 }
@@ -348,8 +357,12 @@ function getModerationStatus(product) {
   const rawStatus = String(product?.moderationStatus || product?.status || '').toLowerCase();
   const approvedFlag = typeof product?.isApproved === 'boolean' ? product.isApproved : product?.approved;
 
+  if (product?.isHidden) {
+    return { key: 'hidden', label: 'Đang ẩn', className: 'badge-dark', reason: getModerationReason(product) };
+  }
+
   if (rawStatus === 'deleted' || rawStatus === 'removed' || product?.deletedAt) {
-    return { label: 'Đã gỡ', className: 'badge-danger' };
+    return { key: 'deleted', label: 'Đã gỡ', className: 'badge-danger', reason: '' };
   }
 
   if (
@@ -359,14 +372,14 @@ function getModerationStatus(product) {
     || approvedFlag === true
     || product?.approvedAt
   ) {
-    return { label: 'Đã duyệt', className: 'badge-ok' };
+    return { key: 'approved', label: 'Đã duyệt', className: 'badge-ok', reason: '' };
   }
 
-  if (rawStatus === 'rejected' || rawStatus === 'declined' || rawStatus === 'hidden' || product?.rejectedAt) {
-    return { label: 'Từ chối', className: 'badge-danger' };
+  if (rawStatus === 'rejected' || rawStatus === 'declined' || product?.rejectedAt) {
+    return { key: 'rejected', label: 'Từ chối', className: 'badge-danger', reason: getModerationReason(product) };
   }
 
-  return { label: 'Chờ duyệt', className: 'badge-warn' };
+  return { key: 'pending', label: 'Chờ duyệt', className: 'badge-warn', reason: '' };
 }
 
 function formatActivityAction(action) {
@@ -381,6 +394,9 @@ function formatActivityAction(action) {
     ban_user: 'Khóa tài khoản',
     unban: 'Mở khóa tài khoản',
     unban_user: 'Mở khóa tài khoản',
+    reject_product: 'Từ chối tin',
+    hide_product: 'Ẩn tin',
+    unhide_product: 'Hiện lại tin',
     update_role: 'Cập nhật quyền',
     change_role: 'Cập nhật quyền',
     role_update: 'Cập nhật quyền',
@@ -843,18 +859,18 @@ function productCardTemplate(product, options = {}) {
   const {
     allowBoost = true,
     allowFavorite = true,
-<<<<<<< HEAD
-=======
     allowManageImages = false,
->>>>>>> f380d9a (edit picture/duyet)
     allowMarkSold = false,
-    markSoldLabel = 'Đánh dấu đã bán'
+    markSoldLabel = 'Đánh dấu đã bán',
+    showModerationInfo = false
   } = options;
   const imageUrl = getProductImageUrl(product);
   const sellerName = product.seller?.name || 'Người bán đã xác minh';
   const postedTime = formatRelativeTime(product.createdAt);
   const categoryName = product.category?.name || '';
   const locationLabel = formatLocation(product.location);
+  const moderation = getModerationStatus(product);
+  const canBoostNow = allowBoost && product?.status === 'approved' && !product?.isHidden && !product?.isSold;
 
   return `
     <article class="product-card">
@@ -883,16 +899,15 @@ function productCardTemplate(product, options = {}) {
           <span class="meta-tag soft">${escapeHtml(locationLabel)}</span>
           <span class="meta-tag soft">${product.views || 0} lượt xem</span>
           <span class="meta-tag soft">${product.favoritesCount || 0} lượt lưu</span>
+          ${showModerationInfo ? `<span class="meta-tag ${moderation.className}">${escapeHtml(moderation.label)}</span>` : ''}
         </div>
+        ${showModerationInfo && moderation.reason ? `<p class="admin-record-note">Lý do kiểm duyệt: ${escapeHtml(moderation.reason)}</p>` : ''}
       </div>
       <div class="product-actions">
         <button type="button" class="btn btn-primary" data-action="detail" data-id="${product._id}">Xem chi tiết</button>
-        ${allowFavorite ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin</button>` : ''}
-        ${allowBoost ? `<button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Đẩy tin</button>` : ''}
-<<<<<<< HEAD
-=======
+        ${allowFavorite ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin (Duyệt lại bởi admin)</button>` : ''}
+        ${canBoostNow ? `<button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Đẩy tin</button>` : ''}
         ${allowManageImages ? `<button type="button" class="btn btn-secondary" data-action="edit-images" data-id="${product._id}">Quản lý ảnh</button>` : ''}
->>>>>>> f380d9a (edit picture/duyet)
         ${allowMarkSold && !product.isSold ? `<button type="button" class="btn btn-secondary" data-action="mark-sold" data-id="${product._id}">${markSoldLabel}</button>` : ''}
       </div>
     </article>
@@ -1048,12 +1063,10 @@ function renderMyProducts(items) {
   } else {
     myProductsList.innerHTML = activeItems.map((product) => productCardTemplate(product, {
       allowFavorite: false,
-<<<<<<< HEAD
-=======
       allowManageImages: true,
->>>>>>> f380d9a (edit picture/duyet)
       allowMarkSold: true,
-      markSoldLabel: 'Đã bán ngoài kênh'
+      markSoldLabel: 'Đã bán ngoài kênh',
+      showModerationInfo: true
     })).join('');
   }
 
@@ -1064,7 +1077,8 @@ function renderMyProducts(items) {
 
   soldProductsList.innerHTML = soldItems.map((product) => productCardTemplate(product, {
     allowBoost: false,
-    allowFavorite: false
+    allowFavorite: false,
+    showModerationInfo: true
   })).join('');
 }
 
@@ -1149,10 +1163,8 @@ function renderProductDetail(product) {
   const imageItems = product.images || [];
   const imageUrl = imageItems[0] ? `/${normalizeAssetPath(imageItems[0].url)}` : '';
   const canMessageSeller = state.currentUser && product.seller?._id !== state.currentUser.id;
-<<<<<<< HEAD
-=======
   const isOwner = isOwnedByCurrentUser(product);
->>>>>>> f380d9a (edit picture/duyet)
+  const moderation = getModerationStatus(product);
   const sellerName = product.seller?.name || 'Người bán đã xác minh';
   const gallery = imageItems.length
     ? imageItems.map((item, index) => `
@@ -1161,8 +1173,6 @@ function renderProductDetail(product) {
       </button>
     `).join('')
     : '';
-<<<<<<< HEAD
-=======
   const imageManager = isOwner ? `
     <section class="detail-image-manager">
       <div class="section-head compact-head">
@@ -1200,7 +1210,15 @@ function renderProductDetail(product) {
       </form>
     </section>
   ` : '';
->>>>>>> f380d9a (edit picture/duyet)
+  const moderationPanel = isOwner ? `
+    <div class="detail-info-card">
+      <strong>Kiểm duyệt tin đăng</strong>
+      <div class="profile-data compact-data">
+        <div class="profile-row"><strong>Trạng thái</strong><span><span class="badge ${moderation.className}">${escapeHtml(moderation.label)}</span></span></div>
+        <div class="profile-row"><strong>Ghi chú</strong><span>${escapeHtml(moderation.reason || 'Chưa có ghi chú từ quản trị viên.')}</span></div>
+      </div>
+    </div>
+  ` : '';
 
   productDetail.innerHTML = `
     <div class="product-detail-layout">
@@ -1214,10 +1232,7 @@ function renderProductDetail(product) {
           <span class="meta-tag">${escapeHtml(formatSellingStatus(product))}</span>
           <span class="meta-tag">${escapeHtml(formatCondition(product.condition))}</span>
         </div>
-<<<<<<< HEAD
-=======
         ${imageManager}
->>>>>>> f380d9a (edit picture/duyet)
       </div>
       <div class="detail-content">
         <div class="detail-description-card">
@@ -1237,6 +1252,7 @@ function renderProductDetail(product) {
           </div>
         </div>
         <div class="detail-info-grid">
+          ${moderationPanel}
           <div class="detail-info-card">
             <strong>Thông tin quét nhanh</strong>
             <div class="profile-data compact-data">
@@ -1273,7 +1289,7 @@ function renderProductDetail(product) {
         </div>
         <div class="detail-contact-actions">
           ${canMessageSeller ? `<button type="button" class="btn btn-primary" data-action="start-conversation" data-id="${product._id}">Nhắn tin người bán</button>` : ''}
-          <button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin này</button>
+          <button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin (Duyệt lại bởi admin)</button>
           <button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Đẩy tin</button>
           <a href="#/products" class="btn btn-secondary">Quay lại danh sách</a>
         </div>
@@ -1387,8 +1403,6 @@ async function markProductAsSold(productId) {
   ]);
 }
 
-<<<<<<< HEAD
-=======
 async function updateProductImages(productId, { files = [], removeImageId = '', replaceImageId = '', replaceFile = null } = {}) {
   const formData = new FormData();
   Array.from(files || []).forEach((file) => {
@@ -1423,7 +1437,6 @@ async function updateProductImages(productId, { files = [], removeImageId = '', 
   return response;
 }
 
->>>>>>> f380d9a (edit picture/duyet)
 async function loadConversations({ silent = false } = {}) {
   if (!isAuthenticated()) {
     conversationsList.innerHTML = buildStateCard('Cần đăng nhập', 'Đăng nhập để xem các cuộc trò chuyện của bạn.', 'empty-state');
@@ -1520,6 +1533,144 @@ function buildAdminMetricCards(items) {
   `).join('');
 }
 
+function buildAdminDashboardMetricCards(items) {
+  return items.map((item) => `
+    <article class="admin-dashboard-metric-card${item.emphasis ? ' is-emphasis' : ''}">
+      <span>${escapeHtml(item.label)}</span>
+      <strong>${escapeHtml(formatCount(item.value))}</strong>
+      ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ''}
+    </article>
+  `).join('');
+}
+
+function getInitials(value) {
+  const words = String(value || '').trim().split(/\s+/).filter(Boolean).slice(0, 2);
+  if (!words.length) return 'ND';
+  return words.map((word) => word.charAt(0).toUpperCase()).join('');
+}
+
+function adminDashboardUserPreviewTemplate(user) {
+  const label = getUserLabel(user);
+  const roleName = getRoleName(user?.role);
+  const banned = isUserBanned(user);
+
+  return `
+    <article class="admin-dashboard-user-card">
+      <div class="admin-dashboard-user-top">
+        <div class="admin-dashboard-user-primary">
+          <div class="admin-dashboard-user-avatar">${escapeHtml(getInitials(label))}</div>
+          <div class="admin-dashboard-user-copy">
+            <strong>${escapeHtml(label)}</strong>
+            <p>${escapeHtml(user?.email || 'Chưa cập nhật email')}</p>
+          </div>
+        </div>
+        <div class="admin-dashboard-user-tags">
+          <span class="badge ${roleName === 'admin' ? 'badge-dark' : ''}">${escapeHtml(formatRoleLabel(roleName))}</span>
+          <span class="badge ${banned ? 'badge-danger' : 'badge-ok'}">${banned ? 'Đang bị khóa' : 'Đang hoạt động'}</span>
+        </div>
+      </div>
+      <div class="admin-meta-row">
+        <span class="meta-tag">SĐT: ${escapeHtml(user?.phone || 'Chưa cập nhật')}</span>
+        <span class="meta-tag">Khu vực: ${escapeHtml(formatLocation(user?.location))}</span>
+        <span class="meta-tag">Tạo lúc: ${escapeHtml(formatDateTime(user?.createdAt))}</span>
+      </div>
+    </article>
+  `;
+}
+
+function adminDashboardProductWorkbenchTemplate(product) {
+  const productId = getObjectId(product);
+  const moderation = getModerationStatus(product);
+  const canModerate = Boolean(productId);
+  const canApprove = canModerate && moderation.key !== 'approved';
+  const canReject = canModerate && moderation.key !== 'rejected';
+  const canHide = canModerate && moderation.key === 'approved';
+  const canUnhide = canModerate && moderation.key === 'hidden';
+  const categoryName = product?.category?.name || product?.categoryName || 'Danh mục chưa rõ';
+  const sellerName = getUserLabel(product?.seller);
+
+  return `
+    <article class="admin-dashboard-product-card">
+      <div class="admin-dashboard-product-head">
+        <div class="admin-dashboard-product-copy">
+          <span class="kicker">Hàng chờ kiểm duyệt</span>
+          <h3>${escapeHtml(product?.title || 'Tin đăng chưa có tiêu đề')}</h3>
+          <p class="admin-record-note">${escapeHtml(truncateText(product?.description || 'Chưa có mô tả chi tiết.', 160))}</p>
+        </div>
+        <div class="admin-dashboard-product-badges">
+          <span class="badge ${moderation.className}">${escapeHtml(moderation.label)}</span>
+          <span class="badge ${product?.isSold ? 'badge-danger' : 'badge-ok'}">${product?.isSold ? 'Đã bán' : 'Đang bán'}</span>
+        </div>
+      </div>
+
+      <div class="admin-dashboard-fact-grid">
+        <div class="admin-dashboard-fact">
+          <span>Người đăng</span>
+          <strong>${escapeHtml(sellerName)}</strong>
+        </div>
+        <div class="admin-dashboard-fact">
+          <span>Danh mục</span>
+          <strong>${escapeHtml(categoryName)}</strong>
+        </div>
+        <div class="admin-dashboard-fact">
+          <span>Giá niêm yết</span>
+          <strong>${escapeHtml(formatCurrency(product?.price))}</strong>
+        </div>
+        <div class="admin-dashboard-fact">
+          <span>Thời điểm tạo</span>
+          <strong>${escapeHtml(formatDateTime(product?.createdAt))}</strong>
+        </div>
+      </div>
+
+      <div class="admin-meta-row">
+        <span class="meta-tag">Khu vực: ${escapeHtml(formatLocation(product?.location))}</span>
+        <span class="meta-tag">Lượt xem: ${escapeHtml(formatCount(product?.views || 0))}</span>
+        <span class="meta-tag">Lượt lưu: ${escapeHtml(formatCount(product?.favoritesCount || 0))}</span>
+      </div>
+
+      ${moderation.reason ? `<p class="admin-dashboard-product-note">Lý do kiểm duyệt: ${escapeHtml(moderation.reason)}</p>` : ''}
+
+      <div class="admin-record-actions admin-dashboard-product-actions">
+        ${canModerate ? `<a href="#/product/${escapeHtml(productId)}" class="header-link">Xem tin</a>` : '<span class="header-link">Thiếu mã tin đăng</span>'}
+        ${canApprove ? `<button type="button" class="btn btn-primary" data-action="admin-post-approve" data-id="${escapeHtml(productId)}">Duyệt tin</button>` : ''}
+        ${canReject ? `<button type="button" class="btn btn-secondary" data-action="admin-post-reject" data-id="${escapeHtml(productId)}">Từ chối</button>` : ''}
+        ${canHide ? `<button type="button" class="btn btn-secondary" data-action="admin-post-hide" data-id="${escapeHtml(productId)}">Ẩn tin</button>` : ''}
+        ${canUnhide ? `<button type="button" class="btn btn-secondary" data-action="admin-post-unhide" data-id="${escapeHtml(productId)}">Hiện lại</button>` : ''}
+        ${canModerate ? `<button type="button" class="btn btn-secondary" data-action="admin-post-delete" data-id="${escapeHtml(productId)}">Xóa tin</button>` : ''}
+      </div>
+    </article>
+  `;
+}
+
+function adminDashboardActivityItemTemplate(activity) {
+  const action = activity?.action || activity?.type || activity?.event || '';
+  const actionLabel = formatActivityAction(action);
+  const targetLabel = getActivityTarget(activity);
+  const description = activity?.description || activity?.message || `${actionLabel}${targetLabel ? ` • ${targetLabel}` : ''}`;
+  const details = formatActivityDetails(activity?.details || activity?.note);
+  const timestamp = formatDateTime(activity?.createdAt || activity?.timestamp || activity?.updatedAt);
+
+  return `
+    <article class="admin-dashboard-activity-item">
+      <div class="admin-dashboard-activity-marker" aria-hidden="true">
+        <span class="admin-dashboard-activity-dot"></span>
+      </div>
+      <div class="admin-dashboard-activity-copy">
+        <div class="admin-dashboard-activity-head">
+          <strong>${escapeHtml(description || 'Hoạt động quản trị')}</strong>
+          <span class="admin-dashboard-activity-time">${escapeHtml(timestamp)}</span>
+        </div>
+        <div class="admin-dashboard-activity-labels">
+          <span class="badge badge-dark">${escapeHtml(actionLabel)}</span>
+          <span class="badge">Thực hiện: ${escapeHtml(getActivityActor(activity))}</span>
+          ${targetLabel ? `<span class="badge">Đối tượng: ${escapeHtml(targetLabel)}</span>` : ''}
+        </div>
+        <p class="admin-dashboard-activity-detail">${escapeHtml(details)}</p>
+      </div>
+    </article>
+  `;
+}
+
 function adminUserCardTemplate(user, options = {}) {
   const { showActions = true } = options;
   const userId = getObjectId(user);
@@ -1581,6 +1732,10 @@ function adminProductCardTemplate(product, options = {}) {
   const productId = getObjectId(product);
   const canModerate = showActions && Boolean(productId);
   const moderation = getModerationStatus(product);
+  const canApprove = canModerate && moderation.key !== 'approved';
+  const canReject = canModerate && moderation.key !== 'rejected';
+  const canHide = canModerate && moderation.key === 'approved';
+  const canUnhide = canModerate && moderation.key === 'hidden';
   const categoryName = product?.category?.name || product?.categoryName || 'Danh mục chưa rõ';
   const sellerName = getUserLabel(product?.seller);
 
@@ -1617,10 +1772,14 @@ function adminProductCardTemplate(product, options = {}) {
           <strong>${escapeHtml(formatCount(product?.favoritesCount || 0))}</strong>
         </div>
       </div>
+      ${moderation.reason ? `<p class="admin-record-note">Lý do kiểm duyệt: ${escapeHtml(moderation.reason)}</p>` : ''}
       ${showActions ? `
         <div class="admin-record-actions">
           ${canModerate ? `<a href="#/product/${escapeHtml(productId)}" class="header-link">Xem tin</a>` : '<span class="header-link">Thiếu mã tin đăng</span>'}
-          ${canModerate && moderation.label === 'Chờ duyệt' ? `<button type="button" class="btn btn-primary" data-action="admin-post-approve" data-id="${escapeHtml(productId)}">Duyệt tin</button>` : ''}
+          ${canApprove ? `<button type="button" class="btn btn-primary" data-action="admin-post-approve" data-id="${escapeHtml(productId)}">Duyệt tin</button>` : ''}
+          ${canReject ? `<button type="button" class="btn btn-secondary" data-action="admin-post-reject" data-id="${escapeHtml(productId)}">Từ chối</button>` : ''}
+          ${canHide ? `<button type="button" class="btn btn-secondary" data-action="admin-post-hide" data-id="${escapeHtml(productId)}">Ẩn tin</button>` : ''}
+          ${canUnhide ? `<button type="button" class="btn btn-secondary" data-action="admin-post-unhide" data-id="${escapeHtml(productId)}">Hiện lại</button>` : ''}
           ${canModerate ? `<button type="button" class="btn btn-secondary" data-action="admin-post-delete" data-id="${escapeHtml(productId)}">Xóa tin</button>` : ''}
         </div>
       ` : ''}
@@ -1658,33 +1817,35 @@ function adminActivityItemTemplate(activity) {
 
 function renderAdminDashboard() {
   const dashboard = state.admin.dashboard || normalizeAdminDashboard({});
+  const prioritizedProducts = dashboard.recentProducts.filter((product) => ['pending', 'hidden', 'rejected'].includes(getModerationStatus(product).key));
+  const productsToShow = prioritizedProducts.slice(0, 4);
 
   if (adminDashboardMetrics) {
-    adminDashboardMetrics.innerHTML = buildAdminMetricCards([
-      { label: 'Tài khoản', value: dashboard.totalUsers, note: 'Tổng người dùng đã tạo' },
-      { label: 'Quản trị viên', value: dashboard.adminUsers, note: 'Tài khoản có quyền quản trị' },
-      { label: 'Đang bị khóa', value: dashboard.bannedUsers, note: 'Cần theo dõi lại truy cập' },
-      { label: 'Tổng tin đăng', value: dashboard.totalProducts, note: 'Số tin đang được quản lý' },
-      { label: 'Chờ duyệt', value: dashboard.pendingProducts, note: 'Các tin cần xử lý ngay' },
-      { label: 'Hoạt động', value: dashboard.totalActivities, note: 'Số bản ghi quản trị hiện có' }
+    adminDashboardMetrics.innerHTML = buildAdminDashboardMetricCards([
+      { label: 'Chờ duyệt', value: dashboard.pendingProducts, note: 'Các tin cần phản hồi ngay trong hàng chờ', emphasis: true },
+      { label: 'Tài khoản', value: dashboard.totalUsers, note: 'Tổng người dùng đang hiện diện trong hệ thống', emphasis: true },
+      { label: 'Quản trị viên', value: dashboard.adminUsers, note: 'Tài khoản có thể thao tác khu vực nội bộ' },
+      { label: 'Đang bị khóa', value: dashboard.bannedUsers, note: 'Các hồ sơ đang bị giới hạn truy cập' },
+      { label: 'Tổng tin', value: dashboard.totalProducts, note: 'Số tin đăng đang được theo dõi' },
+      { label: 'Nhật ký', value: dashboard.totalActivities, note: 'Bản ghi phục vụ đối soát thao tác' }
     ]);
   }
 
   if (adminDashboardUsersPreview) {
     adminDashboardUsersPreview.innerHTML = dashboard.recentUsers.length
-      ? dashboard.recentUsers.slice(0, 3).map((user) => adminUserCardTemplate(user, { showActions: false })).join('')
+      ? dashboard.recentUsers.slice(0, 4).map((user) => adminDashboardUserPreviewTemplate(user)).join('')
       : buildStateCard('Chưa có người dùng mới', 'Khi backend trả về tài khoản mới hoặc danh sách ưu tiên, khu vực này sẽ hiển thị để bạn theo dõi nhanh.', 'empty-state');
   }
 
   if (adminDashboardProductsPreview) {
-    adminDashboardProductsPreview.innerHTML = dashboard.recentProducts.length
-      ? dashboard.recentProducts.slice(0, 3).map((product) => adminProductCardTemplate(product)).join('')
-      : buildStateCard('Không có tin chờ duyệt', 'Hiện chưa có bài đăng nào cần kiểm duyệt ở thời điểm này.', 'empty-state');
+    adminDashboardProductsPreview.innerHTML = productsToShow.length
+      ? productsToShow.map((product) => adminDashboardProductWorkbenchTemplate(product)).join('')
+      : buildStateCard('Hàng chờ đang thông thoáng', 'Hiện chưa có tin đăng nào ở trạng thái cần duyệt, ẩn lại hoặc xem xét từ chối trong khu vực điều phối.', 'empty-state');
   }
 
   if (adminDashboardActivitiesPreview) {
     adminDashboardActivitiesPreview.innerHTML = dashboard.recentActivities.length
-      ? dashboard.recentActivities.slice(0, 5).map((activity) => adminActivityItemTemplate(activity)).join('')
+      ? dashboard.recentActivities.slice(0, 6).map((activity) => adminDashboardActivityItemTemplate(activity)).join('')
       : buildStateCard('Chưa có nhật ký quản trị', 'Các thao tác quản trị mới sẽ được ghi nhận và hiển thị tại đây.', 'empty-state');
   }
 }
@@ -1718,6 +1879,8 @@ function renderAdminProducts() {
   const products = state.admin.products || [];
   const pendingCount = products.filter((product) => getModerationStatus(product).label === 'Chờ duyệt').length;
   const approvedCount = products.filter((product) => getModerationStatus(product).label === 'Đã duyệt').length;
+  const rejectedCount = products.filter((product) => getModerationStatus(product).label === 'Từ chối').length;
+  const hiddenCount = products.filter((product) => getModerationStatus(product).label === 'Đang ẩn').length;
   const soldCount = products.filter((product) => product?.isSold).length;
 
   if (adminProductMetrics) {
@@ -1725,6 +1888,8 @@ function renderAdminProducts() {
       { label: 'Tổng tin', value: products.length, note: 'Tin đăng đã được đồng bộ' },
       { label: 'Chờ duyệt', value: pendingCount, note: 'Cần xác nhận trước khi hiển thị' },
       { label: 'Đã duyệt', value: approvedCount, note: 'Đã sẵn sàng hoặc đang hiển thị' },
+      { label: 'Từ chối', value: rejectedCount, note: 'Cần người bán chỉnh sửa và gửi lại' },
+      { label: 'Đang ẩn', value: hiddenCount, note: 'Tạm thời không hiển thị công khai' },
       { label: 'Đã bán', value: soldCount, note: 'Các tin đã được đánh dấu bán xong' }
     ]);
   }
@@ -1911,6 +2076,32 @@ async function deleteAdminUser(userId) {
 async function approveAdminProduct(productId) {
   await apiFetch(`/api/admin/products/${productId}/approve`, { method: 'PUT' });
   setBanner(globalMessage, 'Tin đăng đã được duyệt thành công.');
+  await refreshAdminAfterProductChange();
+}
+
+async function rejectAdminProduct(productId, reason) {
+  await apiFetch(`/api/admin/products/${productId}/reject`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason })
+  });
+  setBanner(globalMessage, 'Tin đăng đã bị từ chối và người đăng sẽ thấy lý do kiểm duyệt.');
+  await refreshAdminAfterProductChange();
+}
+
+async function hideAdminProduct(productId, reason) {
+  await apiFetch(`/api/admin/products/${productId}/hide`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason })
+  });
+  setBanner(globalMessage, 'Tin đăng đã được ẩn tạm thời khỏi hệ thống công khai.');
+  await refreshAdminAfterProductChange();
+}
+
+async function unhideAdminProduct(productId) {
+  await apiFetch(`/api/admin/products/${productId}/unhide`, { method: 'PUT' });
+  setBanner(globalMessage, 'Tin đăng đã được hiển thị lại theo trạng thái kiểm duyệt hiện tại.');
   await refreshAdminAfterProductChange();
 }
 
@@ -2168,13 +2359,10 @@ document.addEventListener('click', async (event) => {
     if (action === 'detail') {
       window.location.hash = `#/product/${id}`;
     }
-<<<<<<< HEAD
-=======
     if (action === 'edit-images') {
       state.pendingRouteMessage = 'Bạn có thể thêm, xóa hoặc thay ảnh của tin đăng trong phần quản lý ảnh ở trang chi tiết.';
       window.location.hash = `#/product/${id}`;
     }
->>>>>>> f380d9a (edit picture/duyet)
     if (action === 'select-detail-image') {
       const detailMainImage = document.getElementById('detailMainImage');
       if (detailMainImage) {
@@ -2182,8 +2370,6 @@ document.addEventListener('click', async (event) => {
         detailMainImage.setAttribute('alt', actionTarget.dataset.alt || 'Ảnh sản phẩm');
       }
     }
-<<<<<<< HEAD
-=======
     if (action === 'remove-product-image') {
       const productId = actionTarget.dataset.productId || id;
       const imageId = actionTarget.dataset.imageId || '';
@@ -2217,7 +2403,6 @@ document.addEventListener('click', async (event) => {
       }, { once: true });
       input.click();
     }
->>>>>>> f380d9a (edit picture/duyet)
     if (action === 'favorite') {
       await toggleFavorite(id);
     }
@@ -2259,6 +2444,20 @@ document.addEventListener('click', async (event) => {
     if (action === 'admin-post-approve') {
       if (!window.confirm('Duyệt tin đăng này để cho phép hiển thị trên hệ thống?')) return;
       await approveAdminProduct(id);
+    }
+    if (action === 'admin-post-reject') {
+      const reason = window.prompt('Nhập lý do từ chối tin đăng này:');
+      if (reason === null) return;
+      await rejectAdminProduct(id, reason);
+    }
+    if (action === 'admin-post-hide') {
+      const reason = window.prompt('Nhập lý do ẩn tạm tin đăng này:');
+      if (reason === null) return;
+      await hideAdminProduct(id, reason);
+    }
+    if (action === 'admin-post-unhide') {
+      if (!window.confirm('Hiển thị lại tin đăng này?')) return;
+      await unhideAdminProduct(id);
     }
     if (action === 'admin-post-delete') {
       if (!window.confirm('Xóa tin đăng này khỏi hệ thống?')) return;
@@ -2415,8 +2614,6 @@ createProductForm.addEventListener('submit', async (event) => {
   }
 });
 
-<<<<<<< HEAD
-=======
 productDetail.addEventListener('submit', async (event) => {
   const form = event.target.closest('#productImageUploadForm');
   if (!form) return;
@@ -2446,7 +2643,6 @@ productDetail.addEventListener('submit', async (event) => {
   }
 });
 
->>>>>>> f380d9a (edit picture/duyet)
 profileForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   setInlineBox(profileResult, 'Đang cập nhật hồ sơ...');

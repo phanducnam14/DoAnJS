@@ -14,6 +14,9 @@ router.put('/users/:id/ban', adminController.updateUserBan);
 router.delete('/users/:id', adminController.deleteUser);
 router.get('/products', adminController.getProducts);
 router.put('/products/:id/approve', adminController.approveProduct);
+router.put('/products/:id/reject', adminController.rejectProduct);
+router.put('/products/:id/hide', adminController.hideProduct);
+router.put('/products/:id/unhide', adminController.unhideProduct);
 router.delete('/products/:id', adminController.deleteProduct);
 router.get('/activities', adminController.getActivities);
 

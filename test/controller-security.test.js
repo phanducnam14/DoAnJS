@@ -3,19 +3,13 @@ const assert = require('node:assert/strict');
 
 const User = require('../schemas/User');
 const Product = require('../schemas/Product');
-<<<<<<< HEAD
-=======
 const Image = require('../schemas/Image');
->>>>>>> f380d9a (edit picture/duyet)
 const userController = require('../controllers/userController');
 const productController = require('../controllers/productController');
 const { sanitizeUser, pickAllowedFields } = require('../utils/response');
 
-<<<<<<< HEAD
-=======
 const updateProductHandler = productController.updateProduct[productController.updateProduct.length - 1];
 
->>>>>>> f380d9a (edit picture/duyet)
 const createRes = () => ({
   statusCode: 200,
   payload: null,
@@ -87,12 +81,6 @@ test('updateProduct only forwards editable fields', async () => {
   const originalFindOne = Product.findOne;
   const originalFindOneAndUpdate = Product.findOneAndUpdate;
 
-<<<<<<< HEAD
-  Product.findOne = async () => ({
-    _id: 'product-1',
-    seller: 'user-1',
-    status: 'pending'
-=======
   Product.findOne = () => ({
     populate: async () => ({
       _id: 'product-1',
@@ -100,7 +88,6 @@ test('updateProduct only forwards editable fields', async () => {
       status: 'pending',
       images: []
     })
->>>>>>> f380d9a (edit picture/duyet)
   });
 
   Product.findOneAndUpdate = (query, updates) => {
@@ -108,15 +95,6 @@ test('updateProduct only forwards editable fields', async () => {
     assert.deepEqual(updates, { title: 'New title', isSold: true });
 
     return {
-<<<<<<< HEAD
-      populate: async () => ({
-        _id: 'product-1',
-        title: 'New title',
-        isSold: true,
-        isBoosted: false,
-        seller: 'user-1'
-      })
-=======
       populate() {
         return this;
       },
@@ -129,7 +107,6 @@ test('updateProduct only forwards editable fields', async () => {
           seller: 'user-1'
         }));
       }
->>>>>>> f380d9a (edit picture/duyet)
     };
   };
 
@@ -147,11 +124,7 @@ test('updateProduct only forwards editable fields', async () => {
   const res = createRes();
 
   try {
-<<<<<<< HEAD
-    await productController.updateProduct[1](req, res);
-=======
     await updateProductHandler(req, res);
->>>>>>> f380d9a (edit picture/duyet)
     assert.equal(res.statusCode, 200);
     assert.equal(res.payload.data.isBoosted, false);
     assert.equal(res.payload.data.title, 'New title');
@@ -165,12 +138,6 @@ test('updateProduct resets moderation when approved content changes', async () =
   const originalFindOne = Product.findOne;
   const originalFindOneAndUpdate = Product.findOneAndUpdate;
 
-<<<<<<< HEAD
-  Product.findOne = async () => ({
-    _id: 'product-1',
-    seller: 'user-1',
-    status: 'approved'
-=======
   Product.findOne = () => ({
     populate: async () => ({
       _id: 'product-1',
@@ -178,7 +145,6 @@ test('updateProduct resets moderation when approved content changes', async () =
       status: 'approved',
       images: []
     })
->>>>>>> f380d9a (edit picture/duyet)
   });
 
   Product.findOneAndUpdate = (query, updates) => {
@@ -192,13 +158,6 @@ test('updateProduct resets moderation when approved content changes', async () =
     });
 
     return {
-<<<<<<< HEAD
-      populate: async () => ({
-        _id: 'product-1',
-        title: 'Updated title',
-        status: 'pending'
-      })
-=======
       populate() {
         return this;
       },
@@ -209,7 +168,6 @@ test('updateProduct resets moderation when approved content changes', async () =
           status: 'pending'
         }));
       }
->>>>>>> f380d9a (edit picture/duyet)
     };
   };
 
@@ -221,11 +179,7 @@ test('updateProduct resets moderation when approved content changes', async () =
   const res = createRes();
 
   try {
-<<<<<<< HEAD
-    await productController.updateProduct[1](req, res);
-=======
     await updateProductHandler(req, res);
->>>>>>> f380d9a (edit picture/duyet)
     assert.equal(res.statusCode, 200);
     assert.equal(res.payload.data.status, 'pending');
   } finally {
@@ -233,8 +187,6 @@ test('updateProduct resets moderation when approved content changes', async () =
     Product.findOneAndUpdate = originalFindOneAndUpdate;
   }
 });
-<<<<<<< HEAD
-=======
 
 test('updateProduct can remove and add images for the owner', async () => {
   const originalFindOne = Product.findOne;
@@ -322,4 +274,3 @@ test('updateProduct rejects mismatched replacement payloads', async () => {
   assert.equal(res.statusCode, 400);
   assert.equal(res.payload.message, 'Replacement images are invalid');
 });
->>>>>>> f380d9a (edit picture/duyet)

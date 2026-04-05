@@ -11,8 +11,32 @@ const ADMIN_PRODUCT_POPULATE = [
   { path: 'category', select: 'name' },
   { path: 'location', select: 'province district ward address' },
   { path: 'images', select: 'url' },
-  { path: 'approvedBy', select: 'name email' }
+  { path: 'approvedBy', select: 'name email' },
+  { path: 'rejectedBy', select: 'name email' },
+  { path: 'hiddenBy', select: 'name email' }
 ];
+
+const PRODUCT_STATUS_FILTERS = ['pending', 'approved', 'rejected'];
+
+const readReason = (value) => String(value || '').trim();
+
+const clearApprovalState = (product) => {
+  product.approvedAt = null;
+  product.approvedBy = null;
+};
+
+const clearRejectionState = (product) => {
+  product.rejectedAt = null;
+  product.rejectedBy = null;
+  product.rejectionReason = '';
+};
+
+const clearHiddenState = (product) => {
+  product.isHidden = false;
+  product.hiddenAt = null;
+  product.hiddenBy = null;
+  product.hiddenReason = '';
+};
 
 const ensureValidObjectId = (value, res, label) => {
   if (!mongoose.isValidObjectId(value)) {
@@ -55,6 +79,7 @@ exports.getDashboard = async (req, res) => {
       totalProducts,
       pendingProducts,
       approvedProducts,
+      rejectedProducts,
       hiddenProducts,
       soldProducts,
       boostedProducts,
@@ -69,6 +94,7 @@ exports.getDashboard = async (req, res) => {
       Product.countDocuments(),
       Product.countDocuments({ status: 'pending' }),
       Product.countDocuments({ status: 'approved' }),
+      Product.countDocuments({ status: 'rejected' }),
       Product.countDocuments({ isHidden: true }),
       Product.countDocuments({ isSold: true }),
       Product.countDocuments({ isBoosted: true }),
@@ -90,6 +116,7 @@ exports.getDashboard = async (req, res) => {
           totalProducts,
           pendingProducts,
           approvedProducts,
+          rejectedProducts,
           hiddenProducts,
           soldProducts,
           boostedProducts,
@@ -232,7 +259,7 @@ exports.getProducts = async (req, res) => {
       query.title = { $regex: search, $options: 'i' };
     }
 
-    if (req.query.status && ['pending', 'approved'].includes(req.query.status)) {
+    if (req.query.status && PRODUCT_STATUS_FILTERS.includes(req.query.status)) {
       query.status = req.query.status;
     }
 
@@ -258,14 +285,116 @@ exports.approveProduct = async (req, res) => {
     }
 
     product.status = 'approved';
-    product.isHidden = false;
+    clearRejectionState(product);
+    clearHiddenState(product);
     product.approvedAt = new Date();
     product.approvedBy = req.user.id;
     await product.save();
     await product.populate(ADMIN_PRODUCT_POPULATE);
 
     await logAdminActivity(req.user.id, 'approve_product', 'product', product._id, {
-      title: product.title
+      title: product.title,
+      status: product.status
+    });
+
+    res.json({ success: true, data: product });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.rejectProduct = async (req, res) => {
+  try {
+    if (!ensureValidObjectId(req.params.id, res, 'Product id')) return;
+
+    const reason = readReason(req.body.reason);
+    if (!reason) {
+      return res.status(400).json({ message: 'Reason is required' });
+    }
+
+    const product = await Product.findById(req.params.id).populate(ADMIN_PRODUCT_POPULATE);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    product.status = 'rejected';
+    clearApprovalState(product);
+    clearHiddenState(product);
+    product.rejectedAt = new Date();
+    product.rejectedBy = req.user.id;
+    product.rejectionReason = reason;
+    await product.save();
+    await product.populate(ADMIN_PRODUCT_POPULATE);
+
+    await logAdminActivity(req.user.id, 'reject_product', 'product', product._id, {
+      title: product.title,
+      reason,
+      status: product.status
+    });
+
+    res.json({ success: true, data: product });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.hideProduct = async (req, res) => {
+  try {
+    if (!ensureValidObjectId(req.params.id, res, 'Product id')) return;
+
+    const reason = readReason(req.body.reason);
+    if (!reason) {
+      return res.status(400).json({ message: 'Reason is required' });
+    }
+
+    const product = await Product.findById(req.params.id).populate(ADMIN_PRODUCT_POPULATE);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    if (product.status !== 'approved') {
+      return res.status(400).json({ message: 'Only approved products can be hidden' });
+    }
+
+    product.isHidden = true;
+    product.hiddenAt = new Date();
+    product.hiddenBy = req.user.id;
+    product.hiddenReason = reason;
+    await product.save();
+    await product.populate(ADMIN_PRODUCT_POPULATE);
+
+    await logAdminActivity(req.user.id, 'hide_product', 'product', product._id, {
+      title: product.title,
+      reason,
+      status: product.status,
+      isHidden: product.isHidden
+    });
+
+    res.json({ success: true, data: product });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.unhideProduct = async (req, res) => {
+  try {
+    if (!ensureValidObjectId(req.params.id, res, 'Product id')) return;
+
+    const product = await Product.findById(req.params.id).populate(ADMIN_PRODUCT_POPULATE);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    if (!product.isHidden) {
+      return res.status(400).json({ message: 'Product is not hidden' });
+    }
+
+    clearHiddenState(product);
+    await product.save();
+    await product.populate(ADMIN_PRODUCT_POPULATE);
+
+    await logAdminActivity(req.user.id, 'unhide_product', 'product', product._id, {
+      title: product.title,
+      status: product.status,
+      isHidden: product.isHidden
     });
 
     res.json({ success: true, data: product });
