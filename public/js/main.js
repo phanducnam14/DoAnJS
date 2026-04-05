@@ -110,6 +110,12 @@ const state = {
   messagePollTimer: null,
   products: [],
   featuredProducts: [],
+  productComparison: {
+    productId: '',
+    peers: [],
+    criteria: null,
+    error: ''
+  },
   pagination: {
     page: 1,
     pages: 1,
@@ -1253,6 +1259,7 @@ function scrollMessageThreadToLatest() {
 }
 
 function renderProductDetail(product) {
+  const comparePanel = renderProductComparison(product);
   const imageItems = product.images || [];
   const imageUrl = imageItems[0] ? `/${normalizeAssetPath(imageItems[0].url)}` : '';
   const galleryItems = imageItems.slice(1); // Exclude main image
@@ -1372,6 +1379,7 @@ function renderProductDetail(product) {
             </div>
           </div>
         </div>
+        ${comparePanel}
       </div>
       <aside class="detail-contact-card">
         <div>
@@ -1386,11 +1394,122 @@ function renderProductDetail(product) {
         <div class="detail-contact-actions">
           ${canMessageSeller ? `<button type="button" class="btn btn-primary" data-action="start-conversation" data-id="${product._id}">Nhắn tin người bán</button>` : ''}
           ${canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin</button>` : ''}
+          <button type="button" class="btn btn-secondary" data-action="compare" data-id="${product._id}">So sánh cùng danh mục</button>
           ${canBoostNow ? `<button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Đẩy tin</button>` : ''}
           <a href="#/products" class="btn btn-secondary">Quay lại danh sách</a>
         </div>
       </aside>
     </div>
+  `;
+}
+
+function formatPriceDifference(value) {
+  const amount = Number(value) || 0;
+  if (amount === 0) return 'Bằng giá hiện tại';
+  return amount > 0
+    ? `Cao hơn ${formatCurrency(amount)}`
+    : `Thấp hơn ${formatCurrency(Math.abs(amount))}`;
+}
+
+function buildComparisonBadges(item) {
+  const badges = [];
+  if (item?.comparison?.sameSubCategory) {
+    badges.push('<span class="meta-tag soft">Cùng phân nhóm</span>');
+  }
+  if (item?.comparison?.sameDistrict) {
+    badges.push('<span class="meta-tag soft">Cùng quận / huyện</span>');
+  } else if (item?.comparison?.sameProvince) {
+    badges.push('<span class="meta-tag soft">Cùng thành phố</span>');
+  }
+  if (item?.comparison?.sameCondition) {
+    badges.push('<span class="meta-tag soft">Cùng tình trạng</span>');
+  }
+
+  return badges.join('');
+}
+
+function renderProductComparison(currentProduct) {
+  const compareState = state.productComparison;
+  const compareItems = Array.isArray(compareState.peers) ? compareState.peers : [];
+
+  if (compareState.productId !== currentProduct._id) {
+    return '';
+  }
+
+  if (!compareItems.length) {
+    if (compareState.error) {
+      return `
+        <section class="detail-info-card comparison-panel">
+          <div class="section-head compact-head">
+            <div>
+              <p class="kicker">So sánh cùng danh mục</p>
+              <h3>Chưa thể tải dữ liệu so sánh</h3>
+            </div>
+          </div>
+          <p class="comparison-empty">${escapeHtml(compareState.error)}</p>
+        </section>
+      `;
+    }
+
+    return `
+      <section class="detail-info-card comparison-panel">
+        <div class="section-head compact-head">
+          <div>
+            <p class="kicker">So sánh cùng danh mục</p>
+            <h3>Chưa có sản phẩm tương tự</h3>
+          </div>
+        </div>
+        <p class="comparison-empty">Hiện chưa có sản phẩm công khai nào khác trong cùng danh mục để đối chiếu về giá, tình trạng và khu vực.</p>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="detail-info-card comparison-panel">
+      <div class="section-head compact-head">
+        <div>
+          <p class="kicker">So sánh cùng danh mục</p>
+          <h3>Đối chiếu nhanh với các tin gần nhất</h3>
+        </div>
+      </div>
+      <div class="comparison-current-card">
+        <div>
+          <span class="comparison-label">Sản phẩm đang xem</span>
+          <strong>${escapeHtml(currentProduct.title)}</strong>
+        </div>
+        <div class="comparison-current-meta">
+          <span class="meta-tag">${escapeHtml(formatCurrency(currentProduct.price))}</span>
+          <span class="meta-tag">${escapeHtml(formatCondition(currentProduct.condition))}</span>
+          <span class="meta-tag">${escapeHtml(formatLocation(currentProduct.location))}</span>
+        </div>
+      </div>
+      <div class="comparison-grid">
+        ${compareItems.map((item) => `
+          <article class="comparison-card">
+            <div class="comparison-card-head">
+              <div>
+                <span class="comparison-label">${escapeHtml(item.product?.category?.name || 'Cùng danh mục')}</span>
+                <h4>${escapeHtml(item.product?.title || 'Sản phẩm tương tự')}</h4>
+              </div>
+              <strong class="price">${formatCurrency(item.product?.price)}</strong>
+            </div>
+            <div class="comparison-meta-row">
+              ${buildComparisonBadges(item)}
+            </div>
+            <div class="profile-data compact-data comparison-data">
+              <div class="profile-row"><strong>Chênh lệch giá</strong><span>${escapeHtml(formatPriceDifference(item.comparison?.priceDifference))}</span></div>
+              <div class="profile-row"><strong>Tình trạng</strong><span>${escapeHtml(formatCondition(item.product?.condition))}</span></div>
+              <div class="profile-row"><strong>Khu vực</strong><span>${escapeHtml(formatLocation(item.product?.location))}</span></div>
+              <div class="profile-row"><strong>Lượt xem</strong><span>${escapeHtml(formatCount(item.product?.views || 0))}</span></div>
+              <div class="profile-row"><strong>Lượt lưu</strong><span>${escapeHtml(formatCount(item.product?.favoritesCount || 0))}</span></div>
+            </div>
+            <div class="comparison-card-actions">
+              <button type="button" class="btn btn-primary" data-action="detail" data-id="${item.product?._id || ''}">Xem chi tiết</button>
+            </div>
+          </article>
+        `).join('')}
+      </div>
+    </section>
   `;
 }
 
@@ -1613,8 +1732,30 @@ async function loadProductDetail(id, { silent = false } = {}) {
   if (!silent) {
     productDetail.innerHTML = buildStateCard('Đang tải chi tiết sản phẩm', 'Vui lòng chờ để hệ thống hiển thị đầy đủ thông tin sản phẩm.', 'loading-state');
   }
-  const response = await apiFetch(`/api/products/${id}`);
-  renderProductDetail(response.data);
+  const productResponse = await apiFetch(`/api/products/${id}`);
+
+  let comparisonState = {
+    productId: id,
+    peers: [],
+    criteria: null,
+    error: ''
+  };
+
+  try {
+    const comparisonResponse = await apiFetch(`/api/products/${id}/compare`);
+    comparisonState = {
+      productId: id,
+      peers: comparisonResponse.data?.peers || [],
+      criteria: comparisonResponse.data?.criteria || null,
+      error: ''
+    };
+  } catch (error) {
+    comparisonState.error = error.message || 'Dữ liệu so sánh tạm thời chưa khả dụng.';
+  }
+
+  state.productComparison = comparisonState;
+
+  renderProductDetail(productResponse.data);
 }
 
 function renderHomeStats() {
@@ -2489,6 +2630,15 @@ document.addEventListener('click', async (event) => {
     }
     if (action === 'detail') {
       window.location.hash = `#/product/${id}`;
+    }
+    if (action === 'compare') {
+      if (normalizeRoute().name === 'product-detail' && normalizeRoute().id === id) {
+        const comparePanel = document.querySelector('.comparison-panel');
+        comparePanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        state.pendingRouteMessage = 'Kéo xuống phần so sánh để xem nhanh các sản phẩm cùng danh mục.';
+        window.location.hash = `#/product/${id}`;
+      }
     }
     if (action === 'edit-images') {
       state.pendingRouteMessage = 'Bạn có thể thêm, xóa hoặc thay ảnh của tin đăng trong phần quản lý ảnh ở trang chi tiết.';

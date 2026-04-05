@@ -16,6 +16,78 @@ const isAdminRequest = (req) => (req.authRole || req.user?.role?.name || req.use
 const buildPublicProductQuery = () => ({ isSold: false, status: 'approved', isHidden: false });
 const MODERATION_RESET_FIELDS = ['title', 'description', 'price', 'condition', 'category', 'subCategory', 'location'];
 const MAX_PRODUCT_IMAGES = 10;
+const DEFAULT_COMPARE_LIMIT = 4;
+const MAX_COMPARE_LIMIT = 8;
+
+const normalizeCompareLimit = (value) => {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return DEFAULT_COMPARE_LIMIT;
+  }
+
+  return Math.min(parsed, MAX_COMPARE_LIMIT);
+};
+
+const buildCompareLocationMeta = (currentLocation, candidateLocation) => {
+  const currentProvince = currentLocation?.province || '';
+  const currentDistrict = currentLocation?.district || '';
+  const candidateProvince = candidateLocation?.province || '';
+  const candidateDistrict = candidateLocation?.district || '';
+
+  return {
+    sameProvince: Boolean(currentProvince && candidateProvince && currentProvince === candidateProvince),
+    sameDistrict: Boolean(currentDistrict && candidateDistrict && currentDistrict === candidateDistrict)
+  };
+};
+
+const buildCompareItem = (currentProduct, candidateProduct) => {
+  const currentPrice = Number(currentProduct?.price) || 0;
+  const candidatePrice = Number(candidateProduct?.price) || 0;
+  const priceDifference = candidatePrice - currentPrice;
+  const locationMeta = buildCompareLocationMeta(currentProduct?.location, candidateProduct?.location);
+  const sameSubCategory = Boolean(
+    currentProduct?.subCategory
+    && candidateProduct?.subCategory
+    && String(currentProduct.subCategory._id || currentProduct.subCategory) === String(candidateProduct.subCategory._id || candidateProduct.subCategory)
+  );
+  const sameCondition = String(currentProduct?.condition || '') === String(candidateProduct?.condition || '');
+
+  return {
+    product: candidateProduct,
+    comparison: {
+      priceDifference,
+      sameCondition,
+      sameSubCategory,
+      sameProvince: locationMeta.sameProvince,
+      sameDistrict: locationMeta.sameDistrict
+    }
+  };
+};
+
+const compareProductsBySimilarity = (left, right) => {
+  const leftScore =
+    (left.comparison.sameSubCategory ? 4 : 0)
+    + (left.comparison.sameDistrict ? 3 : 0)
+    + (left.comparison.sameProvince ? 2 : 0)
+    + (left.comparison.sameCondition ? 1 : 0);
+  const rightScore =
+    (right.comparison.sameSubCategory ? 4 : 0)
+    + (right.comparison.sameDistrict ? 3 : 0)
+    + (right.comparison.sameProvince ? 2 : 0)
+    + (right.comparison.sameCondition ? 1 : 0);
+
+  if (leftScore !== rightScore) {
+    return rightScore - leftScore;
+  }
+
+  const leftPriceGap = Math.abs(left.comparison.priceDifference);
+  const rightPriceGap = Math.abs(right.comparison.priceDifference);
+  if (leftPriceGap !== rightPriceGap) {
+    return leftPriceGap - rightPriceGap;
+  }
+
+  return new Date(right.product?.createdAt || 0).getTime() - new Date(left.product?.createdAt || 0).getTime();
+};
 
 const clearModerationState = (updates) => {
   updates.status = 'pending';
@@ -145,7 +217,7 @@ exports.getProducts = async (req, res, next) => {
 
     const products = await Product.find(query)
       .populate('seller', PUBLIC_SELLER_FIELDS)
-      .populate('category location images')
+      .populate('category subCategory location images')
       .sort({ isBoosted: -1, boostedUntil: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -167,7 +239,7 @@ exports.getProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id)
       .populate('seller', PUBLIC_SELLER_FIELDS)
-      .populate('category location images');
+      .populate('category subCategory location images');
     if (!product) return res.status(404).json({ message: 'Product not found' });
     const isOwner = String(product.seller?._id || product.seller) === String(req.user?.id);
     if ((product.status !== 'approved' || product.isHidden) && !isOwner && !isAdminRequest(req)) {
@@ -181,12 +253,64 @@ exports.getProduct = async (req, res, next) => {
   }
 };
 
+// @desc Get same-category products for comparison
+// @route GET /api/products/:id/compare
+exports.getProductComparisons = async (req, res, next) => {
+  try {
+    const limit = normalizeCompareLimit(req.query.limit);
+    const currentProduct = await Product.findById(req.params.id)
+      .populate('seller', PUBLIC_SELLER_FIELDS)
+      .populate('category subCategory location images');
+
+    if (!currentProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const isOwner = String(currentProduct.seller?._id || currentProduct.seller) === String(req.user?.id);
+    if ((currentProduct.status !== 'approved' || currentProduct.isHidden) && !isOwner && !isAdminRequest(req)) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const query = {
+      ...buildPublicProductQuery(),
+      _id: { $ne: currentProduct._id },
+      category: currentProduct.category?._id || currentProduct.category
+    };
+
+    const candidateProducts = await Product.find(query)
+      .populate('seller', PUBLIC_SELLER_FIELDS)
+      .populate('category subCategory location images');
+
+    const compareItems = candidateProducts
+      .map((candidateProduct) => buildCompareItem(currentProduct, candidateProduct))
+      .sort(compareProductsBySimilarity)
+      .slice(0, limit);
+
+    res.json({
+      success: true,
+      data: {
+        product: currentProduct,
+        peers: compareItems,
+        criteria: {
+          category: currentProduct.category,
+          subCategory: currentProduct.subCategory || null,
+          location: currentProduct.location || null,
+          condition: currentProduct.condition,
+          limit
+        }
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // @desc Get products of current seller
 exports.getMyProducts = [protect, async (req, res, next) => {
   try {
     const products = await Product.find({ seller: req.user.id })
       .populate('seller', PUBLIC_SELLER_FIELDS)
-      .populate('category location images')
+      .populate('category subCategory location images')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data: products });
