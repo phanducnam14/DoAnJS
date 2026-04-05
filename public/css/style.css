@@ -668,8 +668,22 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   font-size: 13px;
   font-weight: 700;
   color: var(--ink-soft);
+  position: relative;
 }
 .header-link:hover { border-color: var(--line-strong); color: var(--ink); background: var(--bg-subtle); }
+
+/* Header bar messages link badge */
+.header-bar-actions .header-link .unread-badge-dot {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 5px;
+  margin-left: 0;
+  font-size: 11px;
+  border: 2px solid var(--bg-paper);
+}
 
 /* ============================================================
    PAGE STATES
@@ -1034,12 +1048,60 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   font-size: 13px;
   font-weight: 700;
   color: var(--ink-muted);
+  position: relative;
 }
 .main-nav a:hover, .main-nav a.active {
   background: var(--bg-subtle);
   color: var(--ink);
 }
 .main-nav a.active { background: var(--ink); color: var(--ink-invert); }
+
+/* Unread badge for messages */
+.unread-badge-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  margin-left: 6px;
+  background: var(--danger);
+  color: white;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Header badge positioning */
+.header-link .unread-badge-dot {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 5px;
+  margin-left: 0;
+  font-size: 11px;
+  border: 2px solid var(--bg-paper);
+}
+
+/* Nav menu button badge positioning */
+.header-toggle span .unread-badge-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  margin-left: 4px;
+  background: var(--danger);
+  color: white;
+  border-radius: 9px;
+  font-size: 9px;
+  font-weight: 700;
+  vertical-align: middle;
+}
 
 /* Quick actions in nav panel */
 .header-quick-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
@@ -1419,6 +1481,51 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   padding: 0 var(--sp-5) var(--sp-5);
 }
 .product-actions .btn { flex: 1; font-size: 12px; min-height: 40px; }
+.btn-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-icon-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* Quản lý tin đăng: ưu tiên card rộng và nút gọn để dễ thao tác */
+#myProductsList,
+#soldProductsList {
+  gap: var(--sp-5);
+}
+
+#myProductsList .product-card,
+#soldProductsList .product-card {
+  min-width: 0;
+}
+
+#myProductsList .product-actions,
+#soldProductsList .product-actions {
+  gap: var(--sp-2);
+}
+
+#myProductsList .product-actions .btn,
+#soldProductsList .product-actions .btn {
+  min-height: 36px;
+  padding-inline: var(--sp-3);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+#myProductsList .btn-label,
+#soldProductsList .btn-label {
+  gap: 5px;
+}
 
 /* ============================================================
    BROWSE PAGE
@@ -2583,6 +2690,11 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
 
   .product-grid       { grid-template-columns: repeat(3,1fr); }
   .compact-grid       { grid-template-columns: repeat(2,1fr); }
+
+  #myProductsList.compact-grid,
+  #soldProductsList.compact-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
 }
 
 /* ============================================================

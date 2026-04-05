@@ -151,3 +151,25 @@ Headers: `Authorization` = `Bearer {{auth_token}}`
 - **Category/SubCategory từng lỗi validation `slug`:** schema đã tạo `slug` trong hook `pre('validate')`; chỉ cần gửi `name` (và `category` cho subcategory).
 - **Subcategory báo không tìm thấy category:** `category` phải là `_id` đúng chuỗi 24 ký tự hex; tạo category trước hoặc lấy từ `GET /api/categories`.
 - **Duplicate sau seed:** không POST lại cùng tên category đã có; dùng `GET` lấy `_id` có sẵn.
+
+## 8. Ghi chú thay đổi frontend
+
+### Các thay đổi chính
+
+1. Xóa nút dư theo đúng ngữ cảnh.
+   - Ẩn `Lưu tin` nếu người xem là admin, là chủ tin, hoặc tin đã bán.
+   - Ẩn `Đẩy tin` nếu không phải chủ tin.
+   - Ẩn `Nhắn tin người bán` cho admin, chủ tin, hoặc tin đã bán.
+   - Bỏ dòng chữ rườm rà `Lưu tin (Duyệt lại bởi admin)`, đổi còn `Lưu tin`.
+
+2. Giảm render lại gây nháy giao diện.
+   - Thêm chế độ tải `silent` cho `loadProducts`, `loadFavorites`, `loadMyProducts`, `loadProductDetail`.
+   - Sau các thao tác như `favorite`, `boost`, cập nhật ảnh, đánh dấu đã bán: chỉ refresh đúng màn đang xem thay vì reload hàng loạt giao diện.
+   - Sửa luồng `init()` để tránh render route 2 lần lúc khởi động khi đang chuyển về `#/dashboard`.
+
+### Kiểm tra
+
+- `node --check public/js/main.js`: đạt.
+- `npm test`: frontend không lỗi, nhưng repo đang có sẵn 2 test backend fail:
+  - `test/controller-security.test.js:183`
+  - `test/controller-security.test.js:250`

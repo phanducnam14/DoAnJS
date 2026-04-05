@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Conversation = require('../schemas/Conversation');
 const Message = require('../schemas/Message');
 const Product = require('../schemas/Product');
+const Notification = require('../schemas/Notification');
 
 const PARTICIPANT_FIELDS = 'name email avatar';
 const PRODUCT_FIELDS = 'title price images seller isSold isHidden';
@@ -150,26 +151,44 @@ exports.getConversations = async (req, res) => {
       Conversation.find({ participants: req.user.id }).sort({ updatedAt: -1 })
     );
 
+    const userId = String(req.user.id);
     const conversationIds = conversations.map((item) => item._id);
+    
     const unreadRows = conversationIds.length
       ? await Message.aggregate([
         {
           $match: {
-            conversation: { $in: conversationIds },
-            receiver: new mongoose.Types.ObjectId(req.user.id),
-            isRead: false
+            conversation: { $in: conversationIds }
           }
         },
         {
           $group: {
             _id: '$conversation',
-            unreadCount: { $sum: 1 }
+            messages: { $push: { createdAt: '$createdAt', _id: '$_id' } },
+            count: { $sum: 1 }
           }
         }
       ])
       : [];
 
-    const unreadMap = new Map(unreadRows.map((item) => [String(item._id), item.unreadCount]));
+    const unreadMap = new Map();
+    
+    // Calculate unread count based on lastViewedAt
+    unreadRows.forEach((row) => {
+      const conversationId = String(row._id);
+      const conversation = conversations.find((item) => String(item._id) === conversationId);
+      
+      if (conversation) {
+        const lastViewedAt = conversation.participantViews?.get(userId);
+        const unreadCount = row.messages.filter((msg) => {
+          if (!lastViewedAt) return true; // If never viewed, all are unread
+          return new Date(msg.createdAt) > new Date(lastViewedAt);
+        }).length;
+        
+        unreadMap.set(conversationId, unreadCount);
+      }
+    });
+
     const data = conversations.map((item) => serializeConversation(item, unreadMap.get(String(item._id)) || 0));
 
     res.json({ success: true, data });
@@ -189,9 +208,16 @@ exports.getConversationMessages = async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
+    // Mark messages as read for receiver
     await Message.updateMany(
       { conversation: conversation._id, receiver: req.user.id, isRead: false },
       { $set: { isRead: true } }
+    );
+
+    // Update last viewed time for current user
+    await Conversation.findByIdAndUpdate(
+      conversation._id,
+      { $set: { [`participantViews.${String(req.user.id)}`]: new Date() } }
     );
 
     const messages = await Message.find({ conversation: conversation._id })
@@ -244,6 +270,15 @@ exports.sendMessage = async (req, res) => {
 
     conversation.lastMessage = message._id;
     await conversation.save();
+
+    // Create notification for receiver
+    await Notification.create({
+      user: receiverId,
+      type: 'message',
+      title: 'Tin nhắn mới',
+      message: `${req.user.name || 'Một người dùng'} vừa gửi tin nhắn cho bạn`,
+      relatedId: conversation._id
+    });
 
     const populatedMessage = await Message.findById(message._id)
       .populate('sender', PARTICIPANT_FIELDS)

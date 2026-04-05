@@ -47,6 +47,10 @@ const conversationsList = document.getElementById('conversationsList');
 const messageThread = document.getElementById('messageThread');
 const messageForm = document.getElementById('messageForm');
 const messageInput = document.getElementById('messageInput');
+const messagesBadge = document.getElementById('messagesBadge');
+const headerMessagesBadge = document.getElementById('headerMessagesBadge');
+const navMenuBadge = document.getElementById('navMenuBadge');
+const headerBarMessagesBadge = document.getElementById('headerBarMessagesBadge');
 const sellResult = document.getElementById('sellResult');
 const productFilters = document.getElementById('productFilters');
 const createProductForm = document.getElementById('createProductForm');
@@ -345,6 +349,18 @@ function isOwnedByCurrentUser(product) {
   return Boolean(state.currentUser?.id) && getProductOwnerId(product) === state.currentUser.id;
 }
 
+function canFavoriteProduct(product) {
+  return Boolean(state.currentUser?.id) && !isAdminUser() && !isOwnedByCurrentUser(product) && !product?.isSold;
+}
+
+function canBoostProduct(product) {
+  return isOwnedByCurrentUser(product) && product?.status === 'approved' && !product?.isHidden && !product?.isSold;
+}
+
+function canMessageProductSeller(product) {
+  return Boolean(state.currentUser?.id) && !isAdminUser() && !isOwnedByCurrentUser(product) && !product?.isSold;
+}
+
 function getUserLabel(user) {
   return user?.name || user?.fullName || user?.email || 'Người dùng';
 }
@@ -581,10 +597,30 @@ async function apiFetch(path, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || 'Yêu cầu thất bại');
+    const error = new Error(data.message || 'Yêu cầu thất bại');
+    error.status = response.status;
+    error.path = path;
+    throw error;
   }
 
   return data;
+}
+
+async function syncSessionFromServer() {
+  if (!isAuthenticated()) return null;
+
+  const response = await apiFetch('/api/users/me');
+  const user = response.data;
+
+  setUser({
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role?.name || user.role || 'user'
+  });
+
+  updateSessionUI();
+  return user;
 }
 
 function fillSelect(select, items, formatter) {
@@ -855,6 +891,10 @@ function renderDashboardProducts() {
   dashboardProducts.innerHTML = state.featuredProducts.map((product) => productCardTemplate(product, { allowBoost: false })).join('');
 }
 
+function buildButtonLabel(icon, text) {
+  return `<span class="btn-label"><span class="btn-icon-inline" aria-hidden="true">${icon}</span><span>${text}</span></span>`;
+}
+
 function productCardTemplate(product, options = {}) {
   const {
     allowBoost = true,
@@ -862,7 +902,8 @@ function productCardTemplate(product, options = {}) {
     allowManageImages = false,
     allowMarkSold = false,
     markSoldLabel = 'Đánh dấu đã bán',
-    showModerationInfo = false
+    showModerationInfo = false,
+    compactManageActions = false
   } = options;
   const imageUrl = getProductImageUrl(product);
   const sellerName = product.seller?.name || 'Người bán đã xác minh';
@@ -870,7 +911,8 @@ function productCardTemplate(product, options = {}) {
   const categoryName = product.category?.name || '';
   const locationLabel = formatLocation(product.location);
   const moderation = getModerationStatus(product);
-  const canBoostNow = allowBoost && product?.status === 'approved' && !product?.isHidden && !product?.isSold;
+  const canFavoriteNow = allowFavorite && canFavoriteProduct(product);
+  const canBoostNow = allowBoost && canBoostProduct(product);
 
   return `
     <article class="product-card">
@@ -904,10 +946,10 @@ function productCardTemplate(product, options = {}) {
         ${showModerationInfo && moderation.reason ? `<p class="admin-record-note">Lý do kiểm duyệt: ${escapeHtml(moderation.reason)}</p>` : ''}
       </div>
       <div class="product-actions">
-        <button type="button" class="btn btn-primary" data-action="detail" data-id="${product._id}">Xem chi tiết</button>
-        ${allowFavorite ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin (Duyệt lại bởi admin)</button>` : ''}
+        <button type="button" class="btn btn-primary" data-action="detail" data-id="${product._id}">${compactManageActions ? buildButtonLabel('◧', 'Chi tiết') : 'Xem chi tiết'}</button>
+        ${canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin</button>` : ''}
         ${canBoostNow ? `<button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Đẩy tin</button>` : ''}
-        ${allowManageImages ? `<button type="button" class="btn btn-secondary" data-action="edit-images" data-id="${product._id}">Quản lý ảnh</button>` : ''}
+        ${allowManageImages ? `<button type="button" class="btn btn-secondary" data-action="edit-images" data-id="${product._id}">${compactManageActions ? buildButtonLabel('[]', 'Ảnh') : 'Quản lý ảnh'}</button>` : ''}
         ${allowMarkSold && !product.isSold ? `<button type="button" class="btn btn-secondary" data-action="mark-sold" data-id="${product._id}">${markSoldLabel}</button>` : ''}
       </div>
     </article>
@@ -1066,7 +1108,8 @@ function renderMyProducts(items) {
       allowManageImages: true,
       allowMarkSold: true,
       markSoldLabel: 'Đã bán ngoài kênh',
-      showModerationInfo: true
+      showModerationInfo: true,
+      compactManageActions: true
     })).join('');
   }
 
@@ -1078,7 +1121,8 @@ function renderMyProducts(items) {
   soldProductsList.innerHTML = soldItems.map((product) => productCardTemplate(product, {
     allowBoost: false,
     allowFavorite: false,
-    showModerationInfo: true
+    showModerationInfo: true,
+    compactManageActions: true
   })).join('');
 }
 
@@ -1108,6 +1152,55 @@ function renderConversations(items) {
       </button>
     `;
   }).join('');
+}
+
+function updateUnreadBadge() {
+  // Calculate total unread messages
+  const totalUnread = state.conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+  
+  // Update sidebar badge
+  if (messagesBadge) {
+    if (totalUnread > 0) {
+      messagesBadge.textContent = totalUnread > 9 ? '9+' : String(totalUnread);
+      messagesBadge.classList.remove('hidden');
+      messagesBadge.setAttribute('aria-label', `${totalUnread} tin nhắn chưa đọc`);
+    } else {
+      messagesBadge.classList.add('hidden');
+    }
+  }
+
+  // Update header quick actions badge
+  if (headerMessagesBadge) {
+    if (totalUnread > 0) {
+      headerMessagesBadge.textContent = totalUnread > 9 ? '9+' : String(totalUnread);
+      headerMessagesBadge.classList.remove('hidden');
+      headerMessagesBadge.setAttribute('aria-label', `${totalUnread} tin nhắn chưa đọc`);
+    } else {
+      headerMessagesBadge.classList.add('hidden');
+    }
+  }
+
+  // Update nav menu button badge
+  if (navMenuBadge) {
+    if (totalUnread > 0) {
+      navMenuBadge.textContent = totalUnread > 9 ? '9+' : String(totalUnread);
+      navMenuBadge.classList.remove('hidden');
+      navMenuBadge.setAttribute('aria-label', `${totalUnread} tin nhắn chưa đọc`);
+    } else {
+      navMenuBadge.classList.add('hidden');
+    }
+  }
+
+  // Update header bar messages link badge
+  if (headerBarMessagesBadge) {
+    if (totalUnread > 0) {
+      headerBarMessagesBadge.textContent = totalUnread > 9 ? '9+' : String(totalUnread);
+      headerBarMessagesBadge.classList.remove('hidden');
+      headerBarMessagesBadge.setAttribute('aria-label', `${totalUnread} tin nhắn chưa đọc`);
+    } else {
+      headerBarMessagesBadge.classList.add('hidden');
+    }
+  }
 }
 
 function renderMessageThread() {
@@ -1162,14 +1255,17 @@ function scrollMessageThreadToLatest() {
 function renderProductDetail(product) {
   const imageItems = product.images || [];
   const imageUrl = imageItems[0] ? `/${normalizeAssetPath(imageItems[0].url)}` : '';
-  const canMessageSeller = state.currentUser && product.seller?._id !== state.currentUser.id;
+  const galleryItems = imageItems.slice(1); // Exclude main image
   const isOwner = isOwnedByCurrentUser(product);
+  const canMessageSeller = canMessageProductSeller(product);
+  const canFavoriteNow = canFavoriteProduct(product);
+  const canBoostNow = canBoostProduct(product);
   const moderation = getModerationStatus(product);
   const sellerName = product.seller?.name || 'Người bán đã xác minh';
-  const gallery = imageItems.length
-    ? imageItems.map((item, index) => `
-      <button type="button" class="detail-thumb" data-action="select-detail-image" data-image="/${normalizeAssetPath(item.url)}" data-alt="${escapeHtml(product.title)} ${index + 1}" aria-label="Xem ảnh ${index + 1} của ${escapeHtml(product.title)}">
-        <img src="/${normalizeAssetPath(item.url)}" alt="${escapeHtml(product.title)} ${index + 1}" />
+  const gallery = galleryItems.length
+    ? galleryItems.map((item, index) => `
+      <button type="button" class="detail-thumb" data-action="select-detail-image" data-image="/${normalizeAssetPath(item.url)}" data-alt="${escapeHtml(product.title)} ${index + 2}" aria-label="Xem ảnh ${index + 2} của ${escapeHtml(product.title)}">
+        <img src="/${normalizeAssetPath(item.url)}" alt="${escapeHtml(product.title)} ${index + 2}" />
       </button>
     `).join('')
     : '';
@@ -1289,8 +1385,8 @@ function renderProductDetail(product) {
         </div>
         <div class="detail-contact-actions">
           ${canMessageSeller ? `<button type="button" class="btn btn-primary" data-action="start-conversation" data-id="${product._id}">Nhắn tin người bán</button>` : ''}
-          <button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin (Duyệt lại bởi admin)</button>
-          <button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Đẩy tin</button>
+          ${canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin</button>` : ''}
+          ${canBoostNow ? `<button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Đẩy tin</button>` : ''}
           <a href="#/products" class="btn btn-secondary">Quay lại danh sách</a>
         </div>
       </aside>
@@ -1319,9 +1415,11 @@ async function loadDashboardProducts() {
   renderDashboardProducts();
 }
 
-async function loadProducts() {
-  updateProductsSummary('Đang tải kết quả sản phẩm...');
-  productsList.innerHTML = buildStateCard('Đang tải sản phẩm', 'Hệ thống đang tải danh sách sản phẩm, vui lòng chờ trong giây lát.', 'loading-state');
+async function loadProducts({ silent = false } = {}) {
+  if (!silent) {
+    updateProductsSummary('Đang tải kết quả sản phẩm...');
+    productsList.innerHTML = buildStateCard('Đang tải sản phẩm', 'Hệ thống đang tải danh sách sản phẩm, vui lòng chờ trong giây lát.', 'loading-state');
+  }
 
   const params = new URLSearchParams();
   params.set('page', String(state.pagination.page));
@@ -1342,13 +1440,15 @@ async function loadProducts() {
   updatePaginationUI();
 }
 
-async function loadFavorites() {
+async function loadFavorites({ silent = false } = {}) {
   if (!isAuthenticated()) {
     favoritesList.innerHTML = buildStateCard('Cần đăng nhập', 'Vui lòng đăng nhập để xem danh sách yêu thích của bạn.', 'empty-state');
     return;
   }
 
-  favoritesList.innerHTML = buildStateCard('Đang tải yêu thích', 'Hệ thống đang lấy danh sách sản phẩm bạn đã lưu.', 'loading-state');
+  if (!silent) {
+    favoritesList.innerHTML = buildStateCard('Đang tải yêu thích', 'Hệ thống đang lấy danh sách sản phẩm bạn đã lưu.', 'loading-state');
+  }
   const response = await apiFetch('/api/favorites');
   renderFavorites(response.data || []);
 }
@@ -1359,31 +1459,50 @@ async function loadProfile() {
     return;
   }
 
-  const response = await apiFetch('/api/users/me');
-  const user = response.data;
-
-  setUser({
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role?.name || user.role || 'user'
-  });
-
-  updateSessionUI();
+  const user = await syncSessionFromServer();
   renderProfile(user);
 }
 
-async function loadMyProducts() {
+async function loadMyProducts({ silent = false } = {}) {
   if (!isAuthenticated()) {
     myProductsList.innerHTML = buildStateCard('Cần đăng nhập', 'Đăng nhập để xem các tin bạn đã đăng.', 'empty-state');
     soldProductsList.innerHTML = buildStateCard('Cần đăng nhập', 'Đăng nhập để xem lịch sử hàng đã bán của bạn.', 'empty-state');
     return;
   }
 
-  myProductsList.innerHTML = buildStateCard('Đang tải tin của bạn', 'Hệ thống đang lấy danh sách sản phẩm bạn đã đăng.', 'loading-state');
-  soldProductsList.innerHTML = buildStateCard('Đang tải lịch sử đã bán', 'Hệ thống đang đồng bộ danh sách các tin đã được đánh dấu là đã bán.', 'loading-state');
+  if (!silent) {
+    myProductsList.innerHTML = buildStateCard('Đang tải tin của bạn', 'Hệ thống đang lấy danh sách sản phẩm bạn đã đăng.', 'loading-state');
+    soldProductsList.innerHTML = buildStateCard('Đang tải lịch sử đã bán', 'Hệ thống đang đồng bộ danh sách các tin đã được đánh dấu là đã bán.', 'loading-state');
+  }
   const response = await apiFetch('/api/products/mine');
   renderMyProducts(response.data || []);
+}
+
+async function refreshVisibleProductSurfaces(productId = '') {
+  const route = normalizeRoute();
+  const refreshTasks = [];
+
+  if (route.name === 'dashboard') {
+    refreshTasks.push(loadDashboardProducts().catch(() => null));
+  }
+
+  if (route.name === 'products') {
+    refreshTasks.push(loadProducts({ silent: true }).catch(() => null));
+  }
+
+  if (route.name === 'favorites') {
+    refreshTasks.push(loadFavorites({ silent: true }).catch(() => null));
+  }
+
+  if (route.name === 'manage-posts') {
+    refreshTasks.push(loadMyProducts({ silent: true }).catch(() => null));
+  }
+
+  if (route.name === 'product-detail' && route.id && (!productId || route.id === productId)) {
+    refreshTasks.push(loadProductDetail(route.id, { silent: true }).catch(() => null));
+  }
+
+  await Promise.all(refreshTasks);
 }
 
 async function markProductAsSold(productId) {
@@ -1396,10 +1515,8 @@ async function markProductAsSold(productId) {
   setBanner(globalMessage, 'Sản phẩm đã được đánh dấu là đã bán và không còn hiển thị trên trang sản phẩm.');
 
   await Promise.all([
-    loadMyProducts(),
-    loadProducts().catch(() => null),
-    loadDashboardProducts().catch(() => null),
-    loadFavorites().catch(() => null)
+    loadMyProducts({ silent: true }),
+    refreshVisibleProductSurfaces(productId)
   ]);
 }
 
@@ -1428,10 +1545,8 @@ async function updateProductImages(productId, { files = [], removeImageId = '', 
   }
 
   await Promise.all([
-    loadMyProducts().catch(() => null),
-    loadProducts().catch(() => null),
-    loadDashboardProducts().catch(() => null),
-    loadFavorites().catch(() => null)
+    loadMyProducts({ silent: true }).catch(() => null),
+    refreshVisibleProductSurfaces(productId)
   ]);
 
   return response;
@@ -1459,6 +1574,7 @@ async function loadConversations({ silent = false } = {}) {
   }
 
   renderConversations(state.conversations);
+  updateUnreadBadge();
   if (state.activeConversationId) {
     const current = state.conversations.find((item) => item._id === state.activeConversationId);
     if (current) state.activeConversation = current;
@@ -1493,8 +1609,10 @@ async function startConversation(productId) {
   startMessagePolling();
 }
 
-async function loadProductDetail(id) {
-  productDetail.innerHTML = buildStateCard('Đang tải chi tiết sản phẩm', 'Vui lòng chờ để hệ thống hiển thị đầy đủ thông tin sản phẩm.', 'loading-state');
+async function loadProductDetail(id, { silent = false } = {}) {
+  if (!silent) {
+    productDetail.innerHTML = buildStateCard('Đang tải chi tiết sản phẩm', 'Vui lòng chờ để hệ thống hiển thị đầy đủ thông tin sản phẩm.', 'loading-state');
+  }
   const response = await apiFetch(`/api/products/${id}`);
   renderProductDetail(response.data);
 }
@@ -1846,7 +1964,7 @@ function renderAdminDashboard() {
   if (adminDashboardActivitiesPreview) {
     adminDashboardActivitiesPreview.innerHTML = dashboard.recentActivities.length
       ? dashboard.recentActivities.slice(0, 6).map((activity) => adminDashboardActivityItemTemplate(activity)).join('')
-      : buildStateCard('Chưa có nhật ký quản trị', 'Các thao tác quản trị mới sẽ được ghi nhận và hiển thị tại đây.', 'empty-state');
+      : buildStateCard('Chưa có nhật ký', 'Các thao tác quản trị mới sẽ được ghi nhận và hiển thị tại đây.', 'empty-state');
   }
 }
 
@@ -2172,9 +2290,9 @@ async function renderRoute() {
     products: 'Sản phẩm',
     messages: 'Tin nhắn',
     'product-detail': 'Chi tiết sản phẩm',
-    favorites: 'Yêu thích',
-    profile: 'Hồ sơ cá nhân',
-    'manage-posts': 'Quản lý tin đăng',
+    favorites: 'Danh sách quan tâm',
+    profile: 'Tài khoản cá nhân',
+    'manage-posts': 'Hiệu quả tin đăng',
     settings: 'Cài đặt',
     sell: 'Đăng tin mới',
     'admin-dashboard': 'Tổng quan quản trị',
@@ -2256,6 +2374,26 @@ async function renderRoute() {
       await loadAdminActivities();
     }
   } catch (error) {
+    if (error.status === 401) {
+      clearSession();
+      showAuthScreen('login');
+      setBanner(authMessage, 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', 'error');
+      if (window.location.hash !== '#/login') {
+        window.location.hash = '#/login';
+      }
+      return;
+    }
+
+    if (isAdminRoute(route.name) && error.status === 403) {
+      await syncSessionFromServer().catch(() => null);
+
+      if (!isAdminUser()) {
+        state.pendingRouteMessage = 'Tài khoản hiện tại không có quyền truy cập khu vực quản trị.';
+        window.location.hash = '#/dashboard';
+        return;
+      }
+    }
+
     setBanner(globalMessage, error.message, 'error');
   }
 }
@@ -2269,13 +2407,7 @@ async function toggleFavorite(productId) {
 
   const response = await apiFetch(`/api/favorites/${productId}`, { method: 'POST' });
   setBanner(globalMessage, response.message || 'Đã cập nhật danh sách yêu thích.');
-
-  if (window.location.hash === '#/favorites') {
-    await loadFavorites();
-  }
-
-  await loadProducts().catch(() => null);
-  await loadDashboardProducts().catch(() => null);
+  await refreshVisibleProductSurfaces(productId);
 }
 
 async function boostProduct(productId) {
@@ -2287,8 +2419,7 @@ async function boostProduct(productId) {
 
   await apiFetch(`/api/products/${productId}/boost`, { method: 'PUT' });
   setBanner(globalMessage, 'Đẩy tin sản phẩm thành công.');
-  await loadProducts().catch(() => null);
-  await loadDashboardProducts().catch(() => null);
+  await refreshVisibleProductSurfaces(productId);
 }
 
 showLoginBtn.addEventListener('click', () => openAuthTab('login'));
@@ -2456,7 +2587,7 @@ document.addEventListener('click', async (event) => {
       await hideAdminProduct(id, reason);
     }
     if (action === 'admin-post-unhide') {
-      if (!window.confirm('Hiển thị lại tin đăng này?')) return;
+      if (!window.confirm('Hiện lại tin đăng này?')) return;
       await unhideAdminProduct(id);
     }
     if (action === 'admin-post-delete') {
@@ -2797,10 +2928,15 @@ async function init() {
 
     if (isAuthenticated()) {
       showAppShell();
+      await loadProfile().catch(() => null);
+      await loadConversations({ silent: true }).catch(() => null);
+      updateUnreadBadge();
+
       if (!window.location.hash || window.location.hash === '#/login') {
         window.location.hash = '#/dashboard';
+        return;
       }
-      await loadProfile().catch(() => null);
+
       await renderRoute();
       return;
     }

@@ -106,7 +106,7 @@
                 data-panel-toggle="nav" aria-expanded="false" aria-controls="headerNavPanel"
               >
                 <span class="header-toggle-icon" aria-hidden="true">☰</span>
-                <span>Menu</span>
+                <span>Menu<span class="unread-badge-dot hidden" id="navMenuBadge">0</span></span>
               </button>
 
               <a href="#/dashboard" class="brand-block" aria-label="Về trang chủ DoAnJS Marketplace">
@@ -121,7 +121,7 @@
 
             <!-- Right: actions -->
             <div class="header-bar-actions">
-              <a href="#/messages" class="header-link header-link-desktop" style="min-height:40px; font-size:13px;">Tin nhắn</a>
+              <a href="#/messages" class="header-link header-link-desktop" style="min-height:40px; font-size:13px;" id="headerBarMessagesLink">Tin nhắn<span class="unread-badge-dot hidden" id="headerBarMessagesBadge">0</span></a>
               <a href="#/sell" class="btn btn-primary header-sell-btn">+ Đăng tin</a>
               <button
                 id="searchPanelToggle" type="button" class="header-toggle"
@@ -159,7 +159,7 @@
                <nav id="mainMenu" class="main-nav" aria-label="Điều hướng chính">
                  <a href="#/dashboard"    data-route="dashboard">Trang chủ</a>
                  <a href="#/products"     data-route="products">Sản phẩm</a>
-                 <a href="#/messages"     data-route="messages">Tin nhắn</a>
+                 <a href="#/messages"     data-route="messages" id="messagesMenuLink">Tin nhắn<span class="unread-badge-dot hidden" id="messagesBadge">0</span></a>
                  <a href="#/favorites"    data-route="favorites">Yêu thích</a>
                  <a href="#/profile"      data-route="profile">Hồ sơ</a>
                  <a href="#/manage-posts" data-route="manage-posts">Quản lý tin đăng</a>
@@ -173,7 +173,7 @@
               <div class="header-panel-support">
                 <div class="header-quick-actions">
                   <a href="#/products" class="header-link">Duyệt tin</a>
-                  <a href="#/messages" class="header-link">Tin nhắn</a>
+                  <a href="#/messages" class="header-link" id="headerMessagesLink">Tin nhắn<span class="unread-badge-dot hidden" id="headerMessagesBadge">0</span></a>
                   <a href="#/sell" class="btn btn-primary">Đăng tin</a>
                 </div>
               </div>
