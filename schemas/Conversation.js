@@ -14,7 +14,12 @@ const conversationSchema = new mongoose.Schema({
     status: { type: String, enum: ['dang_ban', 'da_ban', 'da_an'], default: 'dang_ban' }
   },
   lastMessage: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' },
-  participantKey: { type: String, required: true }
+  participantKey: { type: String, required: true },
+  participantViews: {
+    type: Map,
+    of: Date,
+    default: {}
+  }
 }, { timestamps: true });
 
 conversationSchema.index({ participants: 1 });
