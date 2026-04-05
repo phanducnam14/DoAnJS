@@ -712,79 +712,104 @@
            ADMIN DASHBOARD
            ====================================================== -->
       <section class="page" data-page="admin-dashboard">
-        <section class="manage-overview-shell">
-          <div class="section-head section-head-wrap">
-            <div>
-              <p class="kicker">Quản trị hệ thống</p>
-              <h3>Tổng quan vận hành</h3>
-              <p class="section-helper">Theo dõi nhanh tình trạng người dùng, tin đăng chờ duyệt và nhịp hoạt động mới nhất của hệ thống.</p>
-            </div>
-            <button id="refreshAdminDashboardBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
-          </div>
-          <div id="adminDashboardMetrics" class="manage-overview-grid"></div>
-        </section>
+        <div class="admin-dashboard-shell">
+          <section class="admin-dashboard-command">
+            <div class="admin-dashboard-command-bar">
+              <div class="admin-dashboard-command-copy">
+                <div>
+                  <p class="kicker">Quản trị hệ thống</p>
+                  <h3>Trung tâm điều phối vận hành</h3>
+                  <p class="section-helper">Quan sát hàng chờ kiểm duyệt, tài khoản mới và chuyển nhanh tới các khu vực nội bộ cần xử lý trong ngày.</p>
+                </div>
+                <div class="admin-dashboard-command-meta">
+                  <span class="badge badge-dark">Bảng điều phối nội bộ</span>
+                  <span class="badge">Đồng bộ trực tiếp từ dữ liệu quản trị</span>
+                </div>
+              </div>
 
-        <section class="dashboard-stream">
-          <div class="dashboard-main">
-            <section class="admin-panel">
+              <div class="admin-dashboard-command-actions">
+                <button id="refreshAdminDashboardBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+                <div class="admin-dashboard-command-links">
+                  <a href="#/admin-posts" class="header-link">Mở kiểm duyệt</a>
+                  <a href="#/admin-activities" class="header-link">Xem nhật ký</a>
+                </div>
+              </div>
+            </div>
+
+            <div id="adminDashboardMetrics" class="manage-overview-grid admin-dashboard-metrics"></div>
+          </section>
+
+          <div class="admin-dashboard-layout">
+            <section class="admin-panel admin-dashboard-workbench">
               <div class="section-head section-head-wrap compact-head">
                 <div>
-                  <p class="kicker">Người dùng mới</p>
-                  <h3>Tài khoản cần chú ý</h3>
+                  <p class="kicker">Workbench kiểm duyệt</p>
+                  <h3>Tin đăng cần xử lý trước</h3>
+                  <p class="section-helper">Tập trung vào các bài đang chờ duyệt hoặc cần can thiệp để giữ luồng nội dung sạch và ổn định.</p>
                 </div>
-                <a href="#/admin-users" class="header-link">Mở quản lý người dùng</a>
+                <a href="#/admin-posts" class="header-link">Mở toàn bộ hàng chờ</a>
               </div>
-              <div id="adminDashboardUsersPreview" class="admin-record-list"></div>
+              <div id="adminDashboardProductsPreview" class="admin-record-list admin-dashboard-workbench-list"></div>
             </section>
 
-            <section class="admin-panel">
-              <div class="section-head section-head-wrap compact-head">
-                <div>
-                  <p class="kicker">Kiểm duyệt nhanh</p>
-                  <h3>Tin đăng đang chờ duyệt</h3>
+            <div class="admin-dashboard-side">
+              <section class="admin-panel admin-dashboard-users-panel">
+                <div class="section-head section-head-wrap compact-head">
+                  <div>
+                    <p class="kicker">Người dùng mới</p>
+                    <h3>Bảng theo dõi tài khoản</h3>
+                  </div>
+                  <a href="#/admin-users" class="header-link">Mở quản lý người dùng</a>
                 </div>
-                <a href="#/admin-posts" class="header-link">Mở kiểm duyệt</a>
-              </div>
-              <div id="adminDashboardProductsPreview" class="admin-record-list"></div>
-            </section>
-          </div>
+                <div id="adminDashboardUsersPreview" class="admin-record-list admin-dashboard-users-list"></div>
+              </section>
 
-          <aside class="dashboard-side">
-            <section class="admin-panel">
-              <div class="section-head compact-head">
-                <div>
-                  <p class="kicker">Điều hướng nhanh</p>
-                  <h3>Công cụ quản trị</h3>
+              <aside class="admin-panel admin-dashboard-tools-panel">
+                <div class="section-head compact-head">
+                  <div>
+                    <p class="kicker">Quick tools</p>
+                    <h3>Thanh điều hướng nhanh</h3>
+                  </div>
                 </div>
-              </div>
-              <div class="action-stack">
-                <a href="#/admin-users" class="action-card">
-                  <strong>Quản lý tài khoản</strong>
-                  <p>Kiểm tra quyền, khóa tài khoản hoặc xóa người dùng không hợp lệ.</p>
-                </a>
-                <a href="#/admin-posts" class="action-card">
-                  <strong>Kiểm duyệt tin đăng</strong>
-                  <p>Duyệt hoặc gỡ các tin chưa phù hợp trước khi hiển thị công khai.</p>
-                </a>
-                <a href="#/admin-activities" class="action-card">
-                  <strong>Nhật ký hoạt động</strong>
-                  <p>Theo dõi các thao tác quản trị gần đây để kiểm soát thay đổi hệ thống.</p>
-                </a>
-              </div>
-            </section>
-          </aside>
-        </section>
 
-        <section class="admin-panel">
-          <div class="section-head section-head-wrap compact-head">
-            <div>
-              <p class="kicker">Nhật ký gần đây</p>
-              <h3>Hoạt động quản trị mới nhất</h3>
+                <div class="admin-dashboard-tools-rail">
+                  <a href="#/admin-users" class="admin-dashboard-tool-card">
+                    <span class="kicker">Tài khoản</span>
+                    <strong>Kiểm soát người dùng</strong>
+                    <p>Rà soát quyền, khóa tạm thời hoặc dọn các hồ sơ không còn phù hợp.</p>
+                  </a>
+                  <a href="#/admin-posts" class="admin-dashboard-tool-card">
+                    <span class="kicker">Nội dung</span>
+                    <strong>Điều phối kiểm duyệt</strong>
+                    <p>Duyệt, từ chối hoặc ẩn các tin cần can thiệp trước khi xuất hiện công khai.</p>
+                  </a>
+                  <a href="#/admin-activities" class="admin-dashboard-tool-card">
+                    <span class="kicker">Nhật ký</span>
+                    <strong>Đối soát thao tác</strong>
+                    <p>Theo dõi các thay đổi quản trị mới nhất để kiểm tra lịch sử xử lý.</p>
+                  </a>
+                </div>
+
+                <div class="admin-dashboard-tools-note">
+                  <span class="status-tag active-tag">Luồng ưu tiên trong ngày</span>
+                  <p>Xử lý hàng chờ duyệt trước, sau đó kiểm tra tài khoản mới và đối chiếu lại lịch sử thao tác khi có thay đổi bất thường.</p>
+                </div>
+              </aside>
             </div>
-            <a href="#/admin-activities" class="header-link">Xem toàn bộ nhật ký</a>
           </div>
-          <div id="adminDashboardActivitiesPreview" class="admin-activity-list"></div>
-        </section>
+
+          <section class="admin-panel admin-dashboard-activity-panel">
+            <div class="section-head section-head-wrap compact-head">
+              <div>
+                <p class="kicker">Dòng thời gian nội bộ</p>
+                <h3>Hoạt động quản trị gần đây</h3>
+                <p class="section-helper">Theo dõi mạch thao tác mới nhất để kiểm tra người thực hiện, đối tượng bị tác động và thời điểm cập nhật.</p>
+              </div>
+              <a href="#/admin-activities" class="header-link">Xem toàn bộ nhật ký</a>
+            </div>
+            <div id="adminDashboardActivitiesPreview" class="admin-activity-list admin-dashboard-activity-list"></div>
+          </section>
+        </div>
       </section>
 
       <!-- ======================================================

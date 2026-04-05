@@ -90,6 +90,12 @@ test('approveProduct marks product approved and logs admin activity', async () =
     isHidden: true,
     approvedAt: null,
     approvedBy: null,
+    rejectedAt: new Date('2024-01-01T00:00:00.000Z'),
+    rejectedBy: 'admin-old',
+    rejectionReason: 'Thiếu ảnh',
+    hiddenAt: new Date('2024-01-02T00:00:00.000Z'),
+    hiddenBy: 'admin-old',
+    hiddenReason: 'Tạm ẩn',
     async save() {
       return this;
     },
@@ -120,16 +126,282 @@ test('approveProduct marks product approved and logs admin activity', async () =
     assert.equal(product.isHidden, false);
     assert.equal(product.approvedBy, '507f1f77bcf86cd799439012');
     assert.ok(product.approvedAt instanceof Date);
+    assert.equal(product.rejectedBy, null);
+    assert.equal(product.rejectionReason, '');
+    assert.equal(product.hiddenBy, null);
+    assert.equal(product.hiddenReason, '');
     assert.deepEqual(createdActivity, {
       admin: '507f1f77bcf86cd799439012',
       action: 'approve_product',
       targetType: 'product',
       targetId: 'product-1',
-      details: { title: 'Laptop' }
+      details: { title: 'Laptop', status: 'approved' }
     });
   } finally {
     Product.findById = originalFindById;
     AdminActivity.create = originalActivityCreate;
+  }
+});
+
+test('rejectProduct marks product rejected with reason and logs admin activity', async () => {
+  const originalFindById = Product.findById;
+  const originalActivityCreate = AdminActivity.create;
+
+  let createdActivity = null;
+
+  const product = {
+    _id: 'product-2',
+    title: 'Điện thoại',
+    status: 'approved',
+    isHidden: true,
+    approvedAt: new Date('2024-01-01T00:00:00.000Z'),
+    approvedBy: 'admin-old',
+    rejectedAt: null,
+    rejectedBy: null,
+    rejectionReason: '',
+    hiddenAt: new Date('2024-01-02T00:00:00.000Z'),
+    hiddenBy: 'admin-old',
+    hiddenReason: 'Tạm ẩn',
+    async save() {
+      return this;
+    },
+    async populate() {
+      return this;
+    }
+  };
+
+  Product.findById = () => ({
+    populate: async () => product
+  });
+  AdminActivity.create = async (payload) => {
+    createdActivity = payload;
+    return payload;
+  };
+
+  const req = {
+    user: { id: '507f1f77bcf86cd799439012' },
+    params: { id: '507f1f77bcf86cd799439011' },
+    body: { reason: 'Sai danh mục' }
+  };
+  const res = createRes();
+
+  try {
+    await adminController.rejectProduct(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(product.status, 'rejected');
+    assert.equal(product.isHidden, false);
+    assert.equal(product.approvedBy, null);
+    assert.equal(product.rejectedBy, '507f1f77bcf86cd799439012');
+    assert.equal(product.rejectionReason, 'Sai danh mục');
+    assert.equal(product.hiddenBy, null);
+    assert.equal(product.hiddenReason, '');
+    assert.ok(product.rejectedAt instanceof Date);
+    assert.deepEqual(createdActivity, {
+      admin: '507f1f77bcf86cd799439012',
+      action: 'reject_product',
+      targetType: 'product',
+      targetId: 'product-2',
+      details: { title: 'Điện thoại', reason: 'Sai danh mục', status: 'rejected' }
+    });
+  } finally {
+    Product.findById = originalFindById;
+    AdminActivity.create = originalActivityCreate;
+  }
+});
+
+test('rejectProduct requires a reason', async () => {
+  const req = {
+    user: { id: '507f1f77bcf86cd799439012' },
+    params: { id: '507f1f77bcf86cd799439011' },
+    body: { reason: '   ' }
+  };
+  const res = createRes();
+
+  await adminController.rejectProduct(req, res);
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.payload.message, 'Reason is required');
+});
+
+test('hideProduct marks product hidden with reason and logs admin activity', async () => {
+  const originalFindById = Product.findById;
+  const originalActivityCreate = AdminActivity.create;
+
+  let createdActivity = null;
+
+  const product = {
+    _id: 'product-3',
+    title: 'Máy ảnh',
+    status: 'approved',
+    isHidden: false,
+    hiddenAt: null,
+    hiddenBy: null,
+    hiddenReason: '',
+    async save() {
+      return this;
+    },
+    async populate() {
+      return this;
+    }
+  };
+
+  Product.findById = () => ({
+    populate: async () => product
+  });
+  AdminActivity.create = async (payload) => {
+    createdActivity = payload;
+    return payload;
+  };
+
+  const req = {
+    user: { id: '507f1f77bcf86cd799439012' },
+    params: { id: '507f1f77bcf86cd799439011' },
+    body: { reason: 'Nghi ngờ nội dung vi phạm' }
+  };
+  const res = createRes();
+
+  try {
+    await adminController.hideProduct(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(product.isHidden, true);
+    assert.equal(product.hiddenBy, '507f1f77bcf86cd799439012');
+    assert.equal(product.hiddenReason, 'Nghi ngờ nội dung vi phạm');
+    assert.ok(product.hiddenAt instanceof Date);
+    assert.deepEqual(createdActivity, {
+      admin: '507f1f77bcf86cd799439012',
+      action: 'hide_product',
+      targetType: 'product',
+      targetId: 'product-3',
+      details: {
+        title: 'Máy ảnh',
+        reason: 'Nghi ngờ nội dung vi phạm',
+        status: 'approved',
+        isHidden: true
+      }
+    });
+  } finally {
+    Product.findById = originalFindById;
+    AdminActivity.create = originalActivityCreate;
+  }
+});
+
+test('hideProduct rejects non-approved products', async () => {
+  const originalFindById = Product.findById;
+
+  const product = {
+    _id: 'product-5',
+    title: 'Tin chờ duyệt',
+    status: 'pending',
+    isHidden: false
+  };
+
+  Product.findById = () => ({
+    populate: async () => product
+  });
+
+  const req = {
+    user: { id: '507f1f77bcf86cd799439012' },
+    params: { id: '507f1f77bcf86cd799439011' },
+    body: { reason: 'Tam an' }
+  };
+  const res = createRes();
+
+  try {
+    await adminController.hideProduct(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.payload.message, 'Only approved products can be hidden');
+  } finally {
+    Product.findById = originalFindById;
+  }
+});
+
+test('unhideProduct clears hidden state and logs admin activity', async () => {
+  const originalFindById = Product.findById;
+  const originalActivityCreate = AdminActivity.create;
+
+  let createdActivity = null;
+
+  const product = {
+    _id: 'product-4',
+    title: 'Laptop gaming',
+    status: 'approved',
+    isHidden: true,
+    hiddenAt: new Date('2024-01-01T00:00:00.000Z'),
+    hiddenBy: 'admin-old',
+    hiddenReason: 'Chờ kiểm tra',
+    async save() {
+      return this;
+    },
+    async populate() {
+      return this;
+    }
+  };
+
+  Product.findById = () => ({
+    populate: async () => product
+  });
+  AdminActivity.create = async (payload) => {
+    createdActivity = payload;
+    return payload;
+  };
+
+  const req = {
+    user: { id: '507f1f77bcf86cd799439012' },
+    params: { id: '507f1f77bcf86cd799439011' }
+  };
+  const res = createRes();
+
+  try {
+    await adminController.unhideProduct(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(product.isHidden, false);
+    assert.equal(product.hiddenBy, null);
+    assert.equal(product.hiddenReason, '');
+    assert.equal(product.hiddenAt, null);
+    assert.deepEqual(createdActivity, {
+      admin: '507f1f77bcf86cd799439012',
+      action: 'unhide_product',
+      targetType: 'product',
+      targetId: 'product-4',
+      details: { title: 'Laptop gaming', status: 'approved', isHidden: false }
+    });
+  } finally {
+    Product.findById = originalFindById;
+    AdminActivity.create = originalActivityCreate;
+  }
+});
+
+test('unhideProduct rejects products that are not hidden', async () => {
+  const originalFindById = Product.findById;
+
+  const product = {
+    _id: 'product-6',
+    title: 'Tin dang hien',
+    status: 'approved',
+    isHidden: false
+  };
+
+  Product.findById = () => ({
+    populate: async () => product
+  });
+
+  const req = {
+    user: { id: '507f1f77bcf86cd799439012' },
+    params: { id: '507f1f77bcf86cd799439011' }
+  };
+  const res = createRes();
+
+  try {
+    await adminController.unhideProduct(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.payload.message, 'Product is not hidden');
+  } finally {
+    Product.findById = originalFindById;
   }
 });
 
