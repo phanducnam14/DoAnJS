@@ -4,12 +4,17 @@ const authScreen = document.getElementById('authScreen');
 const appShell = document.getElementById('appShell');
 const loginPanel = document.getElementById('loginPanel');
 const registerPanel = document.getElementById('registerPanel');
+const resetPanel = document.getElementById('resetPanel');
 const showLoginBtn = document.getElementById('showLoginBtn');
 const showRegisterBtn = document.getElementById('showRegisterBtn');
+const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+const backToLoginBtn = document.getElementById('backToLoginBtn');
+const backToAppBtn = document.getElementById('backToAppBtn');
 const authMessage = document.getElementById('authMessage');
 
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
+const forgotPasswordForm = document.getElementById('forgotPasswordForm');
 const mainMenuLinks = document.querySelectorAll('#mainMenu a');
 const adminOnlyElements = document.querySelectorAll('[data-admin-only]');
 const pages = document.querySelectorAll('.page');
@@ -23,6 +28,10 @@ const sessionLoginBtn = document.getElementById('sessionLoginBtn');
 const sessionRegisterBtn = document.getElementById('sessionRegisterBtn');
 const sessionProfileLink = document.getElementById('sessionProfileLink');
 const sessionFavoritesLink = document.getElementById('sessionFavoritesLink');
+const sessionEntryAvatar = document.getElementById('sessionEntryAvatar');
+const sessionEntryLabel = document.getElementById('sessionEntryLabel');
+const sessionEntrySubtext = document.getElementById('sessionEntrySubtext');
+const sessionPanelAvatar = document.getElementById('sessionPanelAvatar');
 const marketHeader = document.querySelector('.market-header');
 const marketHeaderShell = document.querySelector('.market-header-shell');
 const headerPanelToggles = document.querySelectorAll('[data-panel-toggle]');
@@ -56,6 +65,7 @@ const productFilters = document.getElementById('productFilters');
 const createProductForm = document.getElementById('createProductForm');
 const profileForm = document.getElementById('profileForm');
 const avatarForm = document.getElementById('avatarForm');
+const profileForgotPasswordBtn = document.getElementById('profileForgotPasswordBtn');
 const refreshProductsBtn = document.getElementById('refreshProductsBtn');
 const refreshFavoritesBtn = document.getElementById('refreshFavoritesBtn');
 const refreshConversationsBtn = document.getElementById('refreshConversationsBtn');
@@ -98,11 +108,43 @@ const profileLocationInput = document.getElementById('profileLocation');
 const profileNameInput = profileForm.elements.namedItem('name');
 const profilePhoneInput = profileForm.elements.namedItem('phone');
 
+const CATEGORY_VISIBLE_COUNT = 10;
+const ICONS = {
+  grid: '<rect x="4" y="4" width="6" height="6" rx="1.25"></rect><rect x="14" y="4" width="6" height="6" rx="1.25"></rect><rect x="4" y="14" width="6" height="6" rx="1.25"></rect><rect x="14" y="14" width="6" height="6" rx="1.25"></rect>',
+  house: '<path d="M3 11.5 12 4l9 7.5"></path><path d="M6.5 10.5V20h11V10.5"></path><path d="M10 20v-5h4v5"></path>',
+  laptop: '<rect x="4" y="5" width="16" height="11" rx="2"></rect><path d="M2.5 19h19"></path>',
+  car: '<path d="M5 16.5h14"></path><path d="m6 16.5-.75-3.75A2 2 0 0 1 7.2 10.5h9.6a2 2 0 0 1 1.95 2.25L18 16.5"></path><circle cx="7.5" cy="16.5" r="1.5"></circle><circle cx="16.5" cy="16.5" r="1.5"></circle>',
+  shirt: '<path d="m8 6 2-2h4l2 2 3 2.5-2 3-2-1V20H9v-7.5l-2 1-2-3Z"></path>',
+  sofa: '<path d="M5 12V9.5A2.5 2.5 0 0 1 7.5 7h9A2.5 2.5 0 0 1 19 9.5V12"></path><path d="M4 12h16v5H4z"></path><path d="M6 17v3"></path><path d="M18 17v3"></path>',
+  wrench: '<path d="M14.5 5.5a3.5 3.5 0 0 0 4 4l-8 8a2 2 0 1 1-2.8-2.8l8-8a3.5 3.5 0 0 0-1.2-4.3Z"></path>',
+  briefcase: '<rect x="3.5" y="7" width="17" height="12" rx="2"></rect><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"></path><path d="M3.5 12h17"></path>',
+  paw: '<path d="M8 11.5c-1.1 0-2-.9-2-2.25S6.9 7 8 7s2 .9 2 2.25S9.1 11.5 8 11.5Z"></path><path d="M16 11.5c-1.1 0-2-.9-2-2.25S14.9 7 16 7s2 .9 2 2.25S17.1 11.5 16 11.5Z"></path><path d="M11 8.5c-1 0-1.75-.95-1.75-2.25S10 4 11 4s1.75.95 1.75 2.25S12 8.5 11 8.5Z"></path><path d="M6.5 17.75c0-2.2 2.3-4.25 5.5-4.25s5.5 2.05 5.5 4.25c0 1.2-.8 2.25-2.15 2.25-1.15 0-1.85-.75-3.35-.75-1.5 0-2.25.75-3.35.75-1.35 0-2.15-1.05-2.15-2.25Z"></path>',
+  book: '<path d="M6 5.5A2.5 2.5 0 0 1 8.5 3H19v16H8.5A2.5 2.5 0 0 0 6 21Z"></path><path d="M6 5.5V21H5a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2Z"></path>',
+  dumbbell: '<path d="M3 9v6"></path><path d="M6 7v10"></path><path d="M18 7v10"></path><path d="M21 9v6"></path><path d="M6 12h12"></path>',
+  utensils: '<path d="M5 4v8"></path><path d="M8 4v8"></path><path d="M5 8h3"></path><path d="M13 4v16"></path><path d="M17 4c1.7 1.7 1.7 4.3 0 6v10"></path>',
+  sparkles: '<path d="m12 3 1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4Z"></path><path d="m18.5 14 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z"></path><path d="m5.5 14 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z"></path>',
+  leaf: '<path d="M18.5 5.5C13 5 7 8 5 14c-1 3 1 5 4 5 6 0 9-6 8.5-13.5Z"></path><path d="M8 16c2-2 4-3.5 7-5"></path>',
+  store: '<path d="M4 10h16"></path><path d="M5 10V7l1.5-3h11L19 7v3"></path><path d="M6 10v10h12V10"></path><path d="M10 14h4"></path>',
+  ticket: '<path d="M4 8.5A2.5 2.5 0 0 0 4 15.5V18h16v-2.5a2.5 2.5 0 0 1 0-7V6H4Z"></path><path d="M12 8v8"></path>',
+  heart: '<path d="m12 20-1.1-1C6.1 14.7 3 11.9 3 8.5 3 6 5 4 7.5 4c1.4 0 2.8.65 3.7 1.67C12.1 4.65 13.5 4 14.9 4 17.4 4 19.4 6 19.4 8.5c0 3.4-3.1 6.2-7.9 10.5Z"></path>',
+  message: '<path d="M5 6.5h14A2.5 2.5 0 0 1 21.5 9v6A2.5 2.5 0 0 1 19 17.5H11l-4.5 3v-3H5A2.5 2.5 0 0 1 2.5 15V9A2.5 2.5 0 0 1 5 6.5Z"></path>',
+  rocket: '<path d="M8 16c-1 2-3.5 3-4.5 3 .1-1 1-3.5 3-4.5"></path><path d="M14.5 9.5 9 15l-3-3 5.5-5.5c2.7-2.7 6.5-3 9-3-.1 2.5-.3 6.3-3 9Z"></path><path d="m13 7 4 4"></path>',
+  image: '<rect x="4" y="5" width="16" height="14" rx="2"></rect><circle cx="9" cy="10" r="1.5"></circle><path d="m6 17 4.5-4.5 3.5 3.5 2.5-2.5 1.5 1.5"></path>',
+  check: '<path d="m5 12 4 4 10-10"></path>',
+  'arrow-left': '<path d="M19 12H5"></path><path d="m10 17-5-5 5-5"></path>',
+  eye: '<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle>',
+  user: '<circle cx="12" cy="8" r="3"></circle><path d="M5 19a7 7 0 0 1 14 0"></path>',
+  key: '<circle cx="8" cy="12" r="3"></circle><path d="M11 12h10"></path><path d="M18 12v3"></path><path d="M15 12v2"></path>',
+  'chevron-down': '<path d="m6 9 6 6 6-6"></path>',
+  'chevron-up': '<path d="m6 15 6-6 6 6"></path>'
+};
+
 const state = {
   categories: [],
   locations: [],
   locationsByProvince: {},
   currentUser: loadUser(),
+  categoryStripExpanded: false,
   conversations: [],
   activeConversationId: null,
   activeConversation: null,
@@ -110,12 +152,6 @@ const state = {
   messagePollTimer: null,
   products: [],
   featuredProducts: [],
-  productComparison: {
-    productId: '',
-    peers: [],
-    criteria: null,
-    error: ''
-  },
   pagination: {
     page: 1,
     pages: 1,
@@ -200,6 +236,15 @@ function escapeHtml(value) {
 function formatCurrency(value) {
   if (typeof value !== 'number') return 'Chưa có giá';
   return `${value.toLocaleString('vi-VN')} đ`;
+}
+
+function normalizeSearchKey(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
 }
 
 function formatCondition(value) {
@@ -332,6 +377,58 @@ function formatCount(value) {
   const count = Number(value);
   if (!Number.isFinite(count)) return '0';
   return count.toLocaleString('vi-VN');
+}
+
+function getUserAvatarLabel(user = state.currentUser) {
+  return getInitials(user?.name || user?.email || 'Tài khoản');
+}
+
+function buildAvatarInner(user = state.currentUser) {
+  if (user?.avatar) {
+    return `<img src="/${normalizeAssetPath(user.avatar)}" alt="" />`;
+  }
+
+  return `<span class="avatar-letter">${escapeHtml(getUserAvatarLabel(user))}</span>`;
+}
+
+function paintAvatar(element, user = state.currentUser) {
+  if (!element) return;
+  element.innerHTML = buildAvatarInner(user);
+}
+
+function buildIcon(name, className = 'ui-icon') {
+  const iconMarkup = ICONS[name] || ICONS.grid;
+  return `<svg class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconMarkup}</svg>`;
+}
+
+function buildButtonLabel(iconName, text) {
+  return `<span class="btn-label">${buildIcon(iconName, 'ui-icon btn-icon-inline')}<span>${escapeHtml(text)}</span></span>`;
+}
+
+function buildChipLabel(iconName, text) {
+  return `${buildIcon(iconName, 'ui-icon chip-icon')}<span>${escapeHtml(text)}</span>`;
+}
+
+function getCategoryIconName(name) {
+  const key = normalizeSearchKey(name);
+
+  if (/bat dong san|nha dat|can ho|phong tro|van phong/.test(key)) return 'house';
+  if (/dien thoai|laptop|may tinh|dien tu|cong nghe|camera|tablet|phu kien/.test(key)) return 'laptop';
+  if (/xe|oto|o to|xe may|phuong tien|phu tung/.test(key)) return 'car';
+  if (/thoi trang|quan ao|giay dep|tui xach|phu kien thoi trang/.test(key)) return 'shirt';
+  if (/noi that|gia dung|nha bep|do dung|ban ghe/.test(key)) return 'sofa';
+  if (/dich vu|sua chua|xay dung|do nghe|cong cu/.test(key)) return 'wrench';
+  if (/viec lam|tuyen dung|van phong pham|kinh doanh/.test(key)) return 'briefcase';
+  if (/thu cung|cho meo|pet/.test(key)) return 'paw';
+  if (/sach|tap chi|tai lieu/.test(key)) return 'book';
+  if (/the thao|da ngoai|tap gym|xe dap/.test(key)) return 'dumbbell';
+  if (/an uong|thuc pham|do an|do uong/.test(key)) return 'utensils';
+  if (/lam dep|my pham|cham soc/.test(key)) return 'sparkles';
+  if (/nong nghiep|cay canh|vuon|hat giong/.test(key)) return 'leaf';
+  if (/ve|giai tri|su kien|du lich/.test(key)) return 'ticket';
+  if (/me be|do choi|giao duc/.test(key)) return 'store';
+
+  return 'grid';
 }
 
 function pickNumber(...values) {
@@ -559,23 +656,29 @@ function getProductImageUrl(product) {
 
 function setBanner(element, message, type = 'info') {
   element.textContent = message;
-  element.classList.remove('hidden', 'error');
+  element.classList.remove('hidden', 'error', 'success');
   if (type === 'error') {
     element.classList.add('error');
+  }
+  if (type === 'success') {
+    element.classList.add('success');
   }
 }
 
 function clearBanner(element) {
   element.textContent = '';
   element.classList.add('hidden');
-  element.classList.remove('error');
+  element.classList.remove('error', 'success');
 }
 
 function setInlineBox(element, message, type = 'info') {
   element.textContent = message;
-  element.classList.remove('error');
+  element.classList.remove('error', 'success');
   if (type === 'error') {
     element.classList.add('error');
+  }
+  if (type === 'success') {
+    element.classList.add('success');
   }
 }
 
@@ -622,7 +725,10 @@ async function syncSessionFromServer() {
     id: user._id,
     name: user.name,
     email: user.email,
-    role: user.role?.name || user.role || 'user'
+    role: user.role?.name || user.role || 'user',
+    phone: user.phone,
+    avatar: user.avatar,
+    location: user.location
   });
 
   updateSessionUI();
@@ -747,10 +853,29 @@ async function ensureMetadataLoaded() {
   await loadMetadata();
 }
 
+function syncRecoveryForm(user = state.currentUser) {
+  if (!forgotPasswordForm) return;
+
+  const emailInput = forgotPasswordForm.elements.namedItem('email');
+  const phoneInput = forgotPasswordForm.elements.namedItem('phone');
+
+  emailInput.value = user?.email || '';
+  phoneInput.value = user?.phone || '';
+}
+
 function updateSessionUI() {
+  paintAvatar(sessionEntryAvatar, state.currentUser);
+  paintAvatar(sessionPanelAvatar, state.currentUser);
+
   if (state.currentUser) {
     sessionStatus.textContent = 'Đã đăng nhập';
     sessionUser.textContent = `${state.currentUser.name || 'Người dùng'} | ${state.currentUser.email || ''}${isAdminUser() ? ' | Quản trị viên' : ''}`;
+    if (sessionEntryLabel) {
+      sessionEntryLabel.textContent = state.currentUser.name || 'Tài khoản';
+    }
+    if (sessionEntrySubtext) {
+      sessionEntrySubtext.textContent = isAdminUser() ? 'Quản trị viên' : 'Hồ sơ cá nhân';
+    }
     logoutBtn.classList.remove('hidden');
     sessionLoginBtn?.classList.add('hidden');
     sessionRegisterBtn?.classList.add('hidden');
@@ -759,6 +884,12 @@ function updateSessionUI() {
   } else {
     sessionStatus.textContent = 'Chưa đăng nhập';
     sessionUser.textContent = 'Vui lòng đăng nhập để sử dụng hệ thống.';
+    if (sessionEntryLabel) {
+      sessionEntryLabel.textContent = 'Tài khoản';
+    }
+    if (sessionEntrySubtext) {
+      sessionEntrySubtext.textContent = 'Đăng nhập';
+    }
     logoutBtn.classList.add('hidden');
     sessionLoginBtn?.classList.remove('hidden');
     sessionRegisterBtn?.classList.remove('hidden');
@@ -766,20 +897,28 @@ function updateSessionUI() {
     sessionFavoritesLink?.classList.add('hidden');
   }
 
+  syncRecoveryForm();
   updateAdminNavigation();
 }
 
-function updateAuthTabsUI(isLogin) {
+function updateAuthTabsUI(activePanel) {
+  const isLogin = activePanel === 'login';
+  const isRegister = activePanel === 'register';
+  const isReset = activePanel === 'reset';
+
   loginPanel.classList.toggle('active', isLogin);
-  registerPanel.classList.toggle('active', !isLogin);
+  registerPanel.classList.toggle('active', isRegister);
+  resetPanel.classList.toggle('active', isReset);
   loginPanel.hidden = !isLogin;
-  registerPanel.hidden = isLogin;
+  registerPanel.hidden = !isRegister;
+  resetPanel.hidden = !isReset;
   showLoginBtn.classList.toggle('active', isLogin);
-  showRegisterBtn.classList.toggle('active', !isLogin);
+  showRegisterBtn.classList.toggle('active', isRegister);
   showLoginBtn.setAttribute('aria-selected', String(isLogin));
-  showRegisterBtn.setAttribute('aria-selected', String(!isLogin));
+  showRegisterBtn.setAttribute('aria-selected', String(isRegister));
   showLoginBtn.setAttribute('tabindex', isLogin ? '0' : '-1');
-  showRegisterBtn.setAttribute('tabindex', isLogin ? '-1' : '0');
+  showRegisterBtn.setAttribute('tabindex', isRegister ? '0' : '-1');
+  backToAppBtn?.classList.toggle('hidden', !isAuthenticated());
 }
 
 function showAuthScreen(tab = 'login') {
@@ -839,8 +978,10 @@ function toggleHeaderPanel(name) {
 }
 
 function openAuthTab(tab) {
-  const isLogin = tab === 'login';
-  updateAuthTabsUI(isLogin);
+  updateAuthTabsUI(tab);
+  if (tab === 'reset') {
+    syncRecoveryForm();
+  }
   clearBanner(authMessage);
 }
 
@@ -861,14 +1002,40 @@ function syncFiltersToForm() {
 }
 
 function renderCategoryChips() {
-  const allChip = `<button type="button" class="chip ${state.filters.category ? '' : 'active'}" data-category="">Tất cả</button>`;
-  const items = state.categories.map((item) => `
-    <button type="button" class="chip ${state.filters.category === item._id ? 'active' : ''}" data-category="${item._id}">
-      ${escapeHtml(item.name)}
+  const activeCategoryId = state.filters.category;
+  const activeCategory = state.categories.find((item) => item._id === activeCategoryId);
+  let visibleCategories = state.categories;
+
+  if (!state.categoryStripExpanded && state.categories.length > CATEGORY_VISIBLE_COUNT) {
+    visibleCategories = state.categories.slice(0, CATEGORY_VISIBLE_COUNT);
+
+    if (activeCategory && !visibleCategories.some((item) => item._id === activeCategory._id)) {
+      visibleCategories = [...visibleCategories.slice(0, CATEGORY_VISIBLE_COUNT - 1), activeCategory];
+    }
+  }
+
+  const allChip = `
+    <button type="button" class="chip chip-category ${activeCategoryId ? '' : 'active'}" data-category="">
+      ${buildChipLabel('grid', 'Tất cả')}
+    </button>
+  `;
+
+  const items = visibleCategories.map((item) => `
+    <button type="button" class="chip chip-category ${activeCategoryId === item._id ? 'active' : ''}" data-category="${item._id}">
+      ${buildChipLabel(getCategoryIconName(item.name), item.name)}
     </button>
   `).join('');
 
-  categoryChips.innerHTML = allChip + items;
+  const hiddenCount = Math.max(0, state.categories.length - CATEGORY_VISIBLE_COUNT);
+  const toggleButton = hiddenCount
+    ? `
+      <button type="button" class="chip chip-toggle" data-toggle-categories="true" aria-expanded="${String(state.categoryStripExpanded)}">
+        ${buildChipLabel(state.categoryStripExpanded ? 'chevron-up' : 'chevron-down', state.categoryStripExpanded ? 'Thu gọn' : `Xem thêm ${hiddenCount}`)}
+      </button>
+    `
+    : '';
+
+  categoryChips.innerHTML = allChip + items + toggleButton;
 }
 
 function updatePaginationUI() {
@@ -897,10 +1064,6 @@ function renderDashboardProducts() {
   dashboardProducts.innerHTML = state.featuredProducts.map((product) => productCardTemplate(product, { allowBoost: false })).join('');
 }
 
-function buildButtonLabel(icon, text) {
-  return `<span class="btn-label"><span class="btn-icon-inline" aria-hidden="true">${icon}</span><span>${text}</span></span>`;
-}
-
 function productCardTemplate(product, options = {}) {
   const {
     allowBoost = true,
@@ -918,7 +1081,15 @@ function productCardTemplate(product, options = {}) {
   const locationLabel = formatLocation(product.location);
   const moderation = getModerationStatus(product);
   const canFavoriteNow = allowFavorite && canFavoriteProduct(product);
+  const canMessageNow = canMessageProductSeller(product);
   const canBoostNow = allowBoost && canBoostProduct(product);
+  const secondaryActions = [
+    canMessageNow ? `<button type="button" class="btn btn-secondary" data-action="start-conversation" data-id="${product._id}">${buildButtonLabel('message', 'Nhắn tin')}</button>` : '',
+    canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">${buildButtonLabel('heart', 'Lưu tin')}</button>` : '',
+    canBoostNow ? `<button type="button" class="btn btn-secondary" data-action="boost" data-id="${product._id}">${buildButtonLabel('rocket', 'Đẩy tin')}</button>` : '',
+    allowManageImages ? `<button type="button" class="btn btn-secondary" data-action="edit-images" data-id="${product._id}">${buildButtonLabel('image', compactManageActions ? 'Ảnh' : 'Quản lý ảnh')}</button>` : '',
+    allowMarkSold && !product.isSold ? `<button type="button" class="btn btn-secondary" data-action="mark-sold" data-id="${product._id}">${buildButtonLabel('check', markSoldLabel)}</button>` : ''
+  ].filter(Boolean).join('');
 
   return `
     <article class="product-card">
@@ -952,11 +1123,8 @@ function productCardTemplate(product, options = {}) {
         ${showModerationInfo && moderation.reason ? `<p class="admin-record-note">Lý do kiểm duyệt: ${escapeHtml(moderation.reason)}</p>` : ''}
       </div>
       <div class="product-actions">
-        <button type="button" class="btn btn-primary" data-action="detail" data-id="${product._id}">${compactManageActions ? buildButtonLabel('◧', 'Chi tiết') : 'Xem chi tiết'}</button>
-        ${canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin</button>` : ''}
-        ${canBoostNow ? `<button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Đẩy tin</button>` : ''}
-        ${allowManageImages ? `<button type="button" class="btn btn-secondary" data-action="edit-images" data-id="${product._id}">${compactManageActions ? buildButtonLabel('[]', 'Ảnh') : 'Quản lý ảnh'}</button>` : ''}
-        ${allowMarkSold && !product.isSold ? `<button type="button" class="btn btn-secondary" data-action="mark-sold" data-id="${product._id}">${markSoldLabel}</button>` : ''}
+        <button type="button" class="btn btn-primary product-primary-action" data-action="detail" data-id="${product._id}">${buildButtonLabel('eye', compactManageActions ? 'Chi tiết' : 'Xem chi tiết')}</button>
+        ${secondaryActions ? `<div class="product-quick-actions">${secondaryActions}</div>` : ''}
       </div>
     </article>
   `;
@@ -1029,6 +1197,7 @@ function renderProfile(user) {
     locationId: user.location?._id,
     allowEmptyDistrict: true
   });
+  syncRecoveryForm(user);
 }
 
 function getConversationPartner(conversation) {
@@ -1259,7 +1428,6 @@ function scrollMessageThreadToLatest() {
 }
 
 function renderProductDetail(product) {
-  const comparePanel = renderProductComparison(product);
   const imageItems = product.images || [];
   const imageUrl = imageItems[0] ? `/${normalizeAssetPath(imageItems[0].url)}` : '';
   const galleryItems = imageItems.slice(1); // Exclude main image
@@ -1379,7 +1547,6 @@ function renderProductDetail(product) {
             </div>
           </div>
         </div>
-        ${comparePanel}
       </div>
       <aside class="detail-contact-card">
         <div>
@@ -1392,124 +1559,13 @@ function renderProductDetail(product) {
           <div class="profile-row"><strong>Khu vực</strong><span>${escapeHtml(formatLocation(product.location))}</span></div>
         </div>
         <div class="detail-contact-actions">
-          ${canMessageSeller ? `<button type="button" class="btn btn-primary" data-action="start-conversation" data-id="${product._id}">Nhắn tin người bán</button>` : ''}
-          ${canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin</button>` : ''}
-          <button type="button" class="btn btn-secondary" data-action="compare" data-id="${product._id}">So sánh cùng danh mục</button>
-          ${canBoostNow ? `<button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Đẩy tin</button>` : ''}
-          <a href="#/products" class="btn btn-secondary">Quay lại danh sách</a>
+          ${canMessageSeller ? `<button type="button" class="btn btn-primary" data-action="start-conversation" data-id="${product._id}">${buildButtonLabel('message', 'Nhắn tin người bán')}</button>` : ''}
+          ${canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">${buildButtonLabel('heart', 'Lưu tin')}</button>` : ''}
+          ${canBoostNow ? `<button type="button" class="btn btn-secondary" data-action="boost" data-id="${product._id}">${buildButtonLabel('rocket', 'Đẩy tin')}</button>` : ''}
+          <a href="#/products" class="btn btn-secondary">${buildButtonLabel('arrow-left', 'Quay lại danh sách')}</a>
         </div>
       </aside>
     </div>
-  `;
-}
-
-function formatPriceDifference(value) {
-  const amount = Number(value) || 0;
-  if (amount === 0) return 'Bằng giá hiện tại';
-  return amount > 0
-    ? `Cao hơn ${formatCurrency(amount)}`
-    : `Thấp hơn ${formatCurrency(Math.abs(amount))}`;
-}
-
-function buildComparisonBadges(item) {
-  const badges = [];
-  if (item?.comparison?.sameSubCategory) {
-    badges.push('<span class="meta-tag soft">Cùng phân nhóm</span>');
-  }
-  if (item?.comparison?.sameDistrict) {
-    badges.push('<span class="meta-tag soft">Cùng quận / huyện</span>');
-  } else if (item?.comparison?.sameProvince) {
-    badges.push('<span class="meta-tag soft">Cùng thành phố</span>');
-  }
-  if (item?.comparison?.sameCondition) {
-    badges.push('<span class="meta-tag soft">Cùng tình trạng</span>');
-  }
-
-  return badges.join('');
-}
-
-function renderProductComparison(currentProduct) {
-  const compareState = state.productComparison;
-  const compareItems = Array.isArray(compareState.peers) ? compareState.peers : [];
-
-  if (compareState.productId !== currentProduct._id) {
-    return '';
-  }
-
-  if (!compareItems.length) {
-    if (compareState.error) {
-      return `
-        <section class="detail-info-card comparison-panel">
-          <div class="section-head compact-head">
-            <div>
-              <p class="kicker">So sánh cùng danh mục</p>
-              <h3>Chưa thể tải dữ liệu so sánh</h3>
-            </div>
-          </div>
-          <p class="comparison-empty">${escapeHtml(compareState.error)}</p>
-        </section>
-      `;
-    }
-
-    return `
-      <section class="detail-info-card comparison-panel">
-        <div class="section-head compact-head">
-          <div>
-            <p class="kicker">So sánh cùng danh mục</p>
-            <h3>Chưa có sản phẩm tương tự</h3>
-          </div>
-        </div>
-        <p class="comparison-empty">Hiện chưa có sản phẩm công khai nào khác trong cùng danh mục để đối chiếu về giá, tình trạng và khu vực.</p>
-      </section>
-    `;
-  }
-
-  return `
-    <section class="detail-info-card comparison-panel">
-      <div class="section-head compact-head">
-        <div>
-          <p class="kicker">So sánh cùng danh mục</p>
-          <h3>Đối chiếu nhanh với các tin gần nhất</h3>
-        </div>
-      </div>
-      <div class="comparison-current-card">
-        <div>
-          <span class="comparison-label">Sản phẩm đang xem</span>
-          <strong>${escapeHtml(currentProduct.title)}</strong>
-        </div>
-        <div class="comparison-current-meta">
-          <span class="meta-tag">${escapeHtml(formatCurrency(currentProduct.price))}</span>
-          <span class="meta-tag">${escapeHtml(formatCondition(currentProduct.condition))}</span>
-          <span class="meta-tag">${escapeHtml(formatLocation(currentProduct.location))}</span>
-        </div>
-      </div>
-      <div class="comparison-grid">
-        ${compareItems.map((item) => `
-          <article class="comparison-card">
-            <div class="comparison-card-head">
-              <div>
-                <span class="comparison-label">${escapeHtml(item.product?.category?.name || 'Cùng danh mục')}</span>
-                <h4>${escapeHtml(item.product?.title || 'Sản phẩm tương tự')}</h4>
-              </div>
-              <strong class="price">${formatCurrency(item.product?.price)}</strong>
-            </div>
-            <div class="comparison-meta-row">
-              ${buildComparisonBadges(item)}
-            </div>
-            <div class="profile-data compact-data comparison-data">
-              <div class="profile-row"><strong>Chênh lệch giá</strong><span>${escapeHtml(formatPriceDifference(item.comparison?.priceDifference))}</span></div>
-              <div class="profile-row"><strong>Tình trạng</strong><span>${escapeHtml(formatCondition(item.product?.condition))}</span></div>
-              <div class="profile-row"><strong>Khu vực</strong><span>${escapeHtml(formatLocation(item.product?.location))}</span></div>
-              <div class="profile-row"><strong>Lượt xem</strong><span>${escapeHtml(formatCount(item.product?.views || 0))}</span></div>
-              <div class="profile-row"><strong>Lượt lưu</strong><span>${escapeHtml(formatCount(item.product?.favoritesCount || 0))}</span></div>
-            </div>
-            <div class="comparison-card-actions">
-              <button type="button" class="btn btn-primary" data-action="detail" data-id="${item.product?._id || ''}">Xem chi tiết</button>
-            </div>
-          </article>
-        `).join('')}
-      </div>
-    </section>
   `;
 }
 
@@ -1732,30 +1788,8 @@ async function loadProductDetail(id, { silent = false } = {}) {
   if (!silent) {
     productDetail.innerHTML = buildStateCard('Đang tải chi tiết sản phẩm', 'Vui lòng chờ để hệ thống hiển thị đầy đủ thông tin sản phẩm.', 'loading-state');
   }
-  const productResponse = await apiFetch(`/api/products/${id}`);
-
-  let comparisonState = {
-    productId: id,
-    peers: [],
-    criteria: null,
-    error: ''
-  };
-
-  try {
-    const comparisonResponse = await apiFetch(`/api/products/${id}/compare`);
-    comparisonState = {
-      productId: id,
-      peers: comparisonResponse.data?.peers || [],
-      criteria: comparisonResponse.data?.criteria || null,
-      error: ''
-    };
-  } catch (error) {
-    comparisonState.error = error.message || 'Dữ liệu so sánh tạm thời chưa khả dụng.';
-  }
-
-  state.productComparison = comparisonState;
-
-  renderProductDetail(productResponse.data);
+  const response = await apiFetch(`/api/products/${id}`);
+  renderProductDetail(response.data);
 }
 
 function renderHomeStats() {
@@ -2565,6 +2599,21 @@ async function boostProduct(productId) {
 
 showLoginBtn.addEventListener('click', () => openAuthTab('login'));
 showRegisterBtn.addEventListener('click', () => openAuthTab('register'));
+forgotPasswordBtn?.addEventListener('click', () => openAuthTab('reset'));
+backToLoginBtn?.addEventListener('click', () => openAuthTab('login'));
+backToAppBtn?.addEventListener('click', () => {
+  if (!isAuthenticated()) {
+    openAuthTab('login');
+    return;
+  }
+
+  showAppShell();
+  renderRoute();
+});
+profileForgotPasswordBtn?.addEventListener('click', () => {
+  showAuthScreen('reset');
+  syncRecoveryForm(state.currentUser);
+});
 
 globalSearchForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -2590,6 +2639,13 @@ document.addEventListener('keydown', (event) => {
 });
 
 categoryChips.addEventListener('click', (event) => {
+  const toggleButton = event.target.closest('[data-toggle-categories]');
+  if (toggleButton) {
+    state.categoryStripExpanded = !state.categoryStripExpanded;
+    renderCategoryChips();
+    return;
+  }
+
   const chip = event.target.closest('[data-category]');
   if (!chip) return;
 
@@ -2630,15 +2686,6 @@ document.addEventListener('click', async (event) => {
     }
     if (action === 'detail') {
       window.location.hash = `#/product/${id}`;
-    }
-    if (action === 'compare') {
-      if (normalizeRoute().name === 'product-detail' && normalizeRoute().id === id) {
-        const comparePanel = document.querySelector('.comparison-panel');
-        comparePanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        state.pendingRouteMessage = 'Kéo xuống phần so sánh để xem nhanh các sản phẩm cùng danh mục.';
-        window.location.hash = `#/product/${id}`;
-      }
     }
     if (action === 'edit-images') {
       state.pendingRouteMessage = 'Bạn có thể thêm, xóa hoặc thay ảnh của tin đăng trong phần quản lý ảnh ở trang chi tiết.';
@@ -2795,6 +2842,39 @@ registerForm.addEventListener('submit', async (event) => {
   }
 });
 
+forgotPasswordForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  setBanner(authMessage, 'Đang cập nhật mật khẩu, vui lòng chờ...');
+
+  try {
+    const formData = Object.fromEntries(new FormData(forgotPasswordForm).entries());
+    if (String(formData.password || '') !== String(formData.confirmPassword || '')) {
+      throw new Error('Mật khẩu xác nhận không trùng khớp.');
+    }
+
+    const payload = {
+      email: String(formData.email || '').trim(),
+      phone: String(formData.phone || '').trim(),
+      password: String(formData.password || '')
+    };
+
+    await apiFetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    clearSession();
+    forgotPasswordForm.reset();
+    showAuthScreen('login');
+    loginForm.elements.namedItem('email').value = payload.email;
+    setBanner(authMessage, 'Mật khẩu đã được cập nhật. Vui lòng đăng nhập lại bằng mật khẩu mới.', 'success');
+    window.location.hash = '#/login';
+  } catch (error) {
+    setBanner(authMessage, error.message, 'error');
+  }
+});
+
 productFilters.addEventListener('submit', async (event) => {
   event.preventDefault();
 
@@ -2946,7 +3026,10 @@ profileForm.addEventListener('submit', async (event) => {
       id: response.data._id || state.currentUser?.id,
       name: response.data.name,
       email: response.data.email,
-      role: response.data.role?.name || response.data.role || state.currentUser?.role || 'user'
+      role: response.data.role?.name || response.data.role || state.currentUser?.role || 'user',
+      phone: response.data.phone,
+      avatar: response.data.avatar || state.currentUser?.avatar,
+      location: response.data.location
     });
     updateSessionUI();
     renderProfile(response.data);

@@ -55,6 +55,9 @@
             <span>Mật khẩu</span>
             <input type="password" name="password" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
           </label>
+          <div class="auth-support-row">
+            <button type="button" id="forgotPasswordBtn" class="inline-link auth-inline-link">Quên mật khẩu?</button>
+          </div>
           <button type="submit" class="btn btn-primary btn-lg full">Đăng nhập</button>
         </form>
       </section>
@@ -83,6 +86,37 @@
             <input type="text" name="phone" placeholder="Nhập số điện thoại" autocomplete="tel" required />
           </label>
           <button type="submit" class="btn btn-primary btn-lg full">Tạo tài khoản</button>
+        </form>
+      </section>
+
+      <section id="resetPanel" class="auth-panel" role="tabpanel" aria-labelledby="forgotPasswordBtn" hidden>
+        <div class="panel-head">
+          <h2>Khôi phục mật khẩu</h2>
+          <p>Dùng email và số điện thoại đã đăng ký để đặt lại mật khẩu mới một cách an toàn.</p>
+        </div>
+
+        <form id="forgotPasswordForm" class="form-grid">
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="Nhập địa chỉ email" autocomplete="email" required />
+          </label>
+          <label class="field">
+            <span>Số điện thoại</span>
+            <input type="text" name="phone" placeholder="Nhập số điện thoại đã đăng ký" autocomplete="tel" required />
+          </label>
+          <label class="field">
+            <span>Mật khẩu mới</span>
+            <input type="password" name="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" required />
+          </label>
+          <label class="field">
+            <span>Nhập lại mật khẩu mới</span>
+            <input type="password" name="confirmPassword" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" required />
+          </label>
+          <div class="form-actions auth-panel-actions span-all">
+            <button type="submit" class="btn btn-primary">Cập nhật mật khẩu</button>
+            <button type="button" id="backToLoginBtn" class="btn btn-secondary">Quay lại đăng nhập</button>
+            <button type="button" id="backToAppBtn" class="btn btn-ghost hidden">Quay lại ứng dụng</button>
+          </div>
         </form>
       </section>
     </div>
@@ -136,8 +170,11 @@
                 data-panel-toggle="session" aria-expanded="false" aria-controls="headerSessionPanel"
                 aria-label="Tài khoản"
               >
-                <span class="header-toggle-icon" aria-hidden="true">◌</span>
-                <span class="sr-only">Tài khoản</span>
+                <span id="sessionEntryAvatar" class="header-profile-avatar" aria-hidden="true">TK</span>
+                <span class="header-profile-meta">
+                  <strong id="sessionEntryLabel">Tài khoản</strong>
+                  <small id="sessionEntrySubtext">Đăng nhập</small>
+                </span>
               </button>
             </div>
           </div>
@@ -218,8 +255,11 @@
 
               <div class="session-shell">
                 <div class="session-chip" aria-live="polite">
-                  <strong id="sessionStatus">Chưa đăng nhập</strong>
-                  <span id="sessionUser">Vui lòng đăng nhập để sử dụng hệ thống.</span>
+                  <div id="sessionPanelAvatar" class="session-avatar" aria-hidden="true">TK</div>
+                  <div class="session-chip-copy">
+                    <strong id="sessionStatus">Chưa đăng nhập</strong>
+                    <span id="sessionUser">Vui lòng đăng nhập để sử dụng hệ thống.</span>
+                  </div>
                 </div>
                 <div class="header-session-actions">
                   <a id="sessionProfileLink" href="#/profile"   class="header-link hidden" style="justify-content:center;">Hồ sơ</a>
@@ -612,6 +652,15 @@
                 <button type="submit" class="btn btn-secondary">Tải avatar</button>
               </div>
             </form>
+
+            <div class="account-support-card">
+              <div>
+                <p class="kicker">Hỗ trợ truy cập</p>
+                <h4>Quên mật khẩu?</h4>
+                <p class="account-support-copy">Mở lại biểu mẫu khôi phục để đặt mật khẩu mới bằng email và số điện thoại đã đăng ký.</p>
+              </div>
+              <button type="button" id="profileForgotPasswordBtn" class="btn btn-secondary">Khôi phục mật khẩu</button>
+            </div>
 
             <div id="profileResult" class="inline-box" role="status" aria-live="polite"></div>
           </section>
