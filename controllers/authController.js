@@ -1,8 +1,17 @@
 const User = require('../schemas/User');
 const Role = require('../schemas/Role');
 const { signTokens } = require('../utils/jwt');
-const { registerSchema, loginSchema } = require('../utils/validators');
-const bcrypt = require('bcryptjs');
+const { registerSchema, loginSchema, forgotPasswordSchema } = require('../utils/validators');
+
+const buildSessionUserPayload = (user, roleName) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  phone: user.phone,
+  avatar: user.avatar,
+  location: user.location,
+  role: roleName
+});
 
 // @desc Register
 // @route POST /api/auth/register
@@ -28,7 +37,7 @@ exports.register = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      data: { user: { id: user._id, name, email }, tokens: { accessToken, refreshToken } }
+      data: { user: buildSessionUserPayload(user, userRole.name), tokens: { accessToken, refreshToken } }
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -56,9 +65,37 @@ exports.login = async (req, res, next) => {
     res.json({
       success: true,
       data: { 
-        user: { id: user._id, name: user.name, email, role: user.role.name }, 
+        user: buildSessionUserPayload(user, user.role.name), 
         tokens: { accessToken, refreshToken } 
       }
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc Forgot password via verified contact info
+// @route POST /api/auth/forgot-password
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { error } = forgotPasswordSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.details[0].message });
+
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const phone = String(req.body.phone || '').trim();
+    const password = String(req.body.password || '');
+
+    const user = await User.findOne({ email }).select('+password');
+    if (!user || String(user.phone || '').trim() !== phone) {
+      return res.status(400).json({ message: 'Thông tin khôi phục không khớp với tài khoản đã đăng ký.' });
+    }
+
+    user.password = password;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Mật khẩu đã được cập nhật. Vui lòng đăng nhập lại bằng mật khẩu mới.'
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

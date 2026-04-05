@@ -12,5 +12,11 @@ const loginSchema = Joi.object({
   password: Joi.string().required()
 });
 
-module.exports = { registerSchema, loginSchema };
+const forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().required(),
+  phone: Joi.string().pattern(/^[0-9]{10,11}$/).required(),
+  password: Joi.string().min(6).required()
+});
+
+module.exports = { registerSchema, loginSchema, forgotPasswordSchema };
 
