@@ -1518,6 +1518,72 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
 .detail-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .detail-thumb:hover { border-color: var(--line-strong); }
 
+<<<<<<< HEAD
+=======
+.detail-image-manager {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-6);
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+}
+
+.detail-image-manager-grid {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.detail-image-manager-card {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-subtle);
+}
+
+.detail-image-manager-preview {
+  overflow: hidden;
+  border-radius: var(--r-md);
+  aspect-ratio: 4 / 3;
+  background: var(--bg-muted);
+}
+
+.detail-image-manager-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail-image-manager-copy {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.detail-image-manager-copy strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.detail-image-manager-copy p {
+  font-size: 12px;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+.detail-image-manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.detail-image-manager-actions .btn {
+  flex: 1 1 140px;
+}
+
+>>>>>>> f380d9a (edit picture/duyet)
 /* Detail content */
 .detail-content { display: grid; gap: var(--sp-5); }
 .detail-heading { display: grid; gap: var(--sp-3); }
@@ -1849,6 +1915,107 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
 .top-space { margin-top: var(--sp-5); }
 
 /* ============================================================
+   ADMIN PAGES
+   ============================================================ */
+.admin-panel {
+  padding: var(--sp-6) var(--sp-7);
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+}
+
+.admin-record-list,
+.admin-activity-list {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.admin-record-card,
+.admin-activity-item {
+  padding: var(--sp-5);
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.admin-record-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.admin-record-copy {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.admin-record-copy h3 {
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.admin-record-copy strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.admin-record-note {
+  font-size: 13px;
+  color: var(--ink-muted);
+  line-height: 1.65;
+}
+
+.admin-badge-row,
+.admin-meta-row,
+.admin-record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.admin-kv-grid {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.admin-kv-item {
+  padding: var(--sp-4);
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.admin-kv-item span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.admin-kv-item strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  word-break: break-word;
+}
+
+.admin-record-actions .btn,
+.admin-record-actions .header-link {
+  min-height: 36px;
+}
+
+/* ============================================================
    SETTINGS
    ============================================================ */
 .settings-layout { display: grid; gap: var(--sp-6); }
@@ -1978,6 +2145,7 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   .container { width: min(var(--container-max), calc(100% - 40px)); }
 
   .product-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-kv-grid { grid-template-columns: repeat(2, 1fr); }
 
   .form-grid-2 { grid-template-columns: repeat(2,1fr); }
   .auth-metrics { grid-template-columns: repeat(3,1fr); }
@@ -1996,6 +2164,7 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   .browse-lanes       { grid-template-columns: repeat(3,1fr); }
   .manage-overview-grid { grid-template-columns: repeat(3,1fr); }
   .profile-product-columns { grid-template-columns: repeat(2,1fr); }
+  .admin-kv-grid { grid-template-columns: repeat(3,1fr); }
 
   .page-intro-shell   { grid-template-columns: 1fr minmax(280px, 0.75fr); }
   .market-hero-shell  { grid-template-columns: minmax(0,1.1fr) minmax(0,0.9fr); }
@@ -2078,6 +2247,7 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   .browse-results-shell { padding: var(--sp-5); }
   .sell-guide-shell, .sell-form-shell { padding: var(--sp-5); }
   .manage-overview-shell { padding: var(--sp-5); }
+  .admin-panel { padding: var(--sp-5); }
   .messages-hero, .messages-sidebar, .messages-thread-shell { padding: var(--sp-5); }
   .footer-inner { padding: var(--sp-4) var(--sp-5); }
 
@@ -2088,11 +2258,12 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   .section-head { flex-direction: column; gap: var(--sp-3); }
   .setting-row  { flex-direction: column; align-items: flex-start; }
 
-  .filter-actions, .hero-actions, .pagination-actions, .product-actions, .detail-contact-actions {
+  .filter-actions, .hero-actions, .pagination-actions, .product-actions, .detail-contact-actions, .admin-record-actions {
     flex-direction: column;
   }
   .filter-actions .btn, .hero-actions .btn, .pagination-actions .btn,
-  .product-actions .btn, .detail-contact-actions .btn, .detail-contact-actions a { width: 100%; }
+  .product-actions .btn, .detail-contact-actions .btn, .detail-contact-actions a,
+  .admin-record-actions .btn, .admin-record-actions .header-link { width: 100%; }
 
   .header-link-desktop { display: none; }
 }

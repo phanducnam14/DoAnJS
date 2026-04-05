@@ -156,15 +156,19 @@
                 <strong>Điều hướng chính</strong>
               </div>
 
-              <nav id="mainMenu" class="main-nav" aria-label="Điều hướng chính">
-                <a href="#/dashboard"    data-route="dashboard">Trang chủ</a>
-                <a href="#/products"     data-route="products">Sản phẩm</a>
-                <a href="#/messages"     data-route="messages">Tin nhắn</a>
-                <a href="#/favorites"    data-route="favorites">Yêu thích</a>
-                <a href="#/profile"      data-route="profile">Hồ sơ</a>
-                <a href="#/manage-posts" data-route="manage-posts">Quản lý tin đăng</a>
-                <a href="#/settings"     data-route="settings">Cài đặt</a>
-              </nav>
+               <nav id="mainMenu" class="main-nav" aria-label="Điều hướng chính">
+                 <a href="#/dashboard"    data-route="dashboard">Trang chủ</a>
+                 <a href="#/products"     data-route="products">Sản phẩm</a>
+                 <a href="#/messages"     data-route="messages">Tin nhắn</a>
+                 <a href="#/favorites"    data-route="favorites">Yêu thích</a>
+                 <a href="#/profile"      data-route="profile">Hồ sơ</a>
+                 <a href="#/manage-posts" data-route="manage-posts">Quản lý tin đăng</a>
+                 <a href="#/settings"     data-route="settings">Cài đặt</a>
+                 <a href="#/admin-dashboard"  data-route="admin-dashboard"  data-admin-only class="hidden">Tổng quan quản trị</a>
+                 <a href="#/admin-users"      data-route="admin-users"      data-admin-only class="hidden">Quản lý người dùng</a>
+                 <a href="#/admin-posts"      data-route="admin-posts"      data-admin-only class="hidden">Kiểm duyệt tin</a>
+                 <a href="#/admin-activities" data-route="admin-activities" data-admin-only class="hidden">Nhật ký quản trị</a>
+               </nav>
 
               <div class="header-panel-support">
                 <div class="header-quick-actions">
@@ -218,11 +222,21 @@
                   <span id="sessionUser">Vui lòng đăng nhập để sử dụng hệ thống.</span>
                 </div>
                 <div class="header-session-actions">
-                  <a href="#/profile"   class="header-link" style="justify-content:center;">Hồ sơ</a>
-                  <a href="#/favorites" class="header-link" style="justify-content:center;">Yêu thích</a>
+                  <a id="sessionProfileLink" href="#/profile"   class="header-link hidden" style="justify-content:center;">Hồ sơ</a>
+                  <a id="sessionFavoritesLink" href="#/favorites" class="header-link hidden" style="justify-content:center;">Yêu thích</a>
+                  <button
+                    id="sessionLoginBtn" type="button"
+                    class="btn btn-primary"
+                    style="width:100%;"
+                  >Đăng nhập</button>
+                  <button
+                    id="sessionRegisterBtn" type="button"
+                    class="btn btn-secondary"
+                    style="width:100%;"
+                  >Đăng ký</button>
                   <button
                     id="logoutBtn" type="button"
-                    class="logout-text header-session-logout"
+                    class="logout-text header-session-logout hidden"
                     style="width:100%;"
                   >Đăng xuất</button>
                 </div>
@@ -692,6 +706,166 @@
           </section>
 
         </div>
+      </section>
+
+      <!-- ======================================================
+           ADMIN DASHBOARD
+           ====================================================== -->
+      <section class="page" data-page="admin-dashboard">
+        <section class="manage-overview-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Quản trị hệ thống</p>
+              <h3>Tổng quan vận hành</h3>
+              <p class="section-helper">Theo dõi nhanh tình trạng người dùng, tin đăng chờ duyệt và nhịp hoạt động mới nhất của hệ thống.</p>
+            </div>
+            <button id="refreshAdminDashboardBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+          </div>
+          <div id="adminDashboardMetrics" class="manage-overview-grid"></div>
+        </section>
+
+        <section class="dashboard-stream">
+          <div class="dashboard-main">
+            <section class="admin-panel">
+              <div class="section-head section-head-wrap compact-head">
+                <div>
+                  <p class="kicker">Người dùng mới</p>
+                  <h3>Tài khoản cần chú ý</h3>
+                </div>
+                <a href="#/admin-users" class="header-link">Mở quản lý người dùng</a>
+              </div>
+              <div id="adminDashboardUsersPreview" class="admin-record-list"></div>
+            </section>
+
+            <section class="admin-panel">
+              <div class="section-head section-head-wrap compact-head">
+                <div>
+                  <p class="kicker">Kiểm duyệt nhanh</p>
+                  <h3>Tin đăng đang chờ duyệt</h3>
+                </div>
+                <a href="#/admin-posts" class="header-link">Mở kiểm duyệt</a>
+              </div>
+              <div id="adminDashboardProductsPreview" class="admin-record-list"></div>
+            </section>
+          </div>
+
+          <aside class="dashboard-side">
+            <section class="admin-panel">
+              <div class="section-head compact-head">
+                <div>
+                  <p class="kicker">Điều hướng nhanh</p>
+                  <h3>Công cụ quản trị</h3>
+                </div>
+              </div>
+              <div class="action-stack">
+                <a href="#/admin-users" class="action-card">
+                  <strong>Quản lý tài khoản</strong>
+                  <p>Kiểm tra quyền, khóa tài khoản hoặc xóa người dùng không hợp lệ.</p>
+                </a>
+                <a href="#/admin-posts" class="action-card">
+                  <strong>Kiểm duyệt tin đăng</strong>
+                  <p>Duyệt hoặc gỡ các tin chưa phù hợp trước khi hiển thị công khai.</p>
+                </a>
+                <a href="#/admin-activities" class="action-card">
+                  <strong>Nhật ký hoạt động</strong>
+                  <p>Theo dõi các thao tác quản trị gần đây để kiểm soát thay đổi hệ thống.</p>
+                </a>
+              </div>
+            </section>
+          </aside>
+        </section>
+
+        <section class="admin-panel">
+          <div class="section-head section-head-wrap compact-head">
+            <div>
+              <p class="kicker">Nhật ký gần đây</p>
+              <h3>Hoạt động quản trị mới nhất</h3>
+            </div>
+            <a href="#/admin-activities" class="header-link">Xem toàn bộ nhật ký</a>
+          </div>
+          <div id="adminDashboardActivitiesPreview" class="admin-activity-list"></div>
+        </section>
+      </section>
+
+      <!-- ======================================================
+           ADMIN USERS
+           ====================================================== -->
+      <section class="page" data-page="admin-users">
+        <section class="manage-overview-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Quản trị thành viên</p>
+              <h3>Quản lý người dùng</h3>
+              <p class="section-helper">Cập nhật vai trò, khóa tài khoản và dọn dẹp các hồ sơ không còn phù hợp.</p>
+            </div>
+            <button id="refreshAdminUsersBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+          </div>
+          <div id="adminUserMetrics" class="manage-overview-grid"></div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="section-head section-head-wrap compact-head">
+            <div>
+              <p class="kicker">Danh sách tài khoản</p>
+              <h3>Người dùng trong hệ thống</h3>
+            </div>
+          </div>
+          <div id="adminUsersList" class="admin-record-list"></div>
+        </section>
+      </section>
+
+      <!-- ======================================================
+           ADMIN POSTS
+           ====================================================== -->
+      <section class="page" data-page="admin-posts">
+        <section class="manage-overview-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Quản trị nội dung</p>
+              <h3>Kiểm duyệt tin đăng</h3>
+              <p class="section-helper">Xem trạng thái tin, duyệt nội dung hợp lệ và xóa các bài đăng cần gỡ khỏi hệ thống.</p>
+            </div>
+            <button id="refreshAdminProductsBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+          </div>
+          <div id="adminProductMetrics" class="manage-overview-grid"></div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="section-head section-head-wrap compact-head">
+            <div>
+              <p class="kicker">Danh sách tin</p>
+              <h3>Luồng duyệt bài đăng</h3>
+            </div>
+          </div>
+          <div id="adminProductsList" class="admin-record-list"></div>
+        </section>
+      </section>
+
+      <!-- ======================================================
+           ADMIN ACTIVITIES
+           ====================================================== -->
+      <section class="page" data-page="admin-activities">
+        <section class="manage-overview-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Theo dõi nội bộ</p>
+              <h3>Nhật ký hoạt động quản trị</h3>
+              <p class="section-helper">Kiểm tra các thao tác gần đây để đảm bảo mọi thay đổi đều có thể truy vết rõ ràng.</p>
+            </div>
+            <button id="refreshAdminActivitiesBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+          </div>
+          <div id="adminActivityMetrics" class="manage-overview-grid"></div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="section-head section-head-wrap compact-head">
+            <div>
+              <p class="kicker">Lịch sử thao tác</p>
+              <h3>Bản ghi đã thực hiện</h3>
+            </div>
+          </div>
+          <div id="adminActivitiesList" class="admin-activity-list"></div>
+        </section>
       </section>
 
     </main><!-- /app-content -->

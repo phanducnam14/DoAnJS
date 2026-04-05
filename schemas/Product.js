@@ -10,6 +10,10 @@ const productSchema = new mongoose.Schema({
   subCategory: { type: mongoose.Schema.Types.ObjectId, ref: 'SubCategory' },
   location: { type: mongoose.Schema.Types.ObjectId, ref: 'Location', required: true },
   seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  status: { type: String, enum: ['pending', 'approved'], default: 'pending' },
+  isHidden: { type: Boolean, default: false },
+  approvedAt: Date,
+  approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   isSold: { type: Boolean, default: false },
   isBoosted: { type: Boolean, default: false },
   boostedUntil: Date,
@@ -19,6 +23,7 @@ const productSchema = new mongoose.Schema({
 
 productSchema.index({ category: 1, location: 1, createdAt: -1 });
 productSchema.index({ isBoosted: 1, boostedUntil: 1 });
+productSchema.index({ status: 1, isHidden: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Product', productSchema);
 

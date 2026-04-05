@@ -92,10 +92,14 @@ exports.createConversation = async (req, res) => {
     }
 
     const product = await Product.findById(productId)
-      .select('title seller price images isSold isHidden')
+      .select('title seller price images isSold isHidden status')
       .populate('images', 'url');
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
+    }
+
+    if (product.isHidden || product.status === 'pending') {
+      return res.status(400).json({ message: 'Product is not available for conversation' });
     }
 
     if (String(product.seller) === String(req.user.id)) {

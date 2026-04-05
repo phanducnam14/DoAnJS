@@ -26,6 +26,15 @@ const upload = multer({
 });
 
 const uploadImages = upload.array('images', 10); // max 10 images
+<<<<<<< HEAD
 
 module.exports = { uploadImages };
 
+=======
+const uploadProductImages = upload.fields([
+  { name: 'images', maxCount: 10 },
+  { name: 'replaceImages', maxCount: 10 }
+]);
+
+module.exports = { uploadImages, uploadProductImages };
+>>>>>>> f380d9a (edit picture/duyet)

@@ -13,6 +13,7 @@ const locationsRouter = require('./routes/locations');
 const favoritesRouter = require('./routes/favorites');
 const metaRouter = require('./routes/meta');
 const conversationsRouter = require('./routes/conversations');
+const adminRouter = require('./routes/admin');
 
 const createApp = () => {
   const app = express();
@@ -39,6 +40,7 @@ const createApp = () => {
   app.use('/api/favorites', favoritesRouter);
   app.use('/api/meta', metaRouter);
   app.use('/api/conversations', conversationsRouter);
+  app.use('/api/admin', adminRouter);
 
   app.use((req, res, next) => {
     res.status(404).json({ message: 'Not Found' });
