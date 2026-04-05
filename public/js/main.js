@@ -325,6 +325,17 @@ function getObjectId(value) {
   return value?._id || value?.id || value || '';
 }
 
+<<<<<<< HEAD
+=======
+function getProductOwnerId(product) {
+  return getObjectId(product?.seller);
+}
+
+function isOwnedByCurrentUser(product) {
+  return Boolean(state.currentUser?.id) && getProductOwnerId(product) === state.currentUser.id;
+}
+
+>>>>>>> f380d9a (edit picture/duyet)
 function getUserLabel(user) {
   return user?.name || user?.fullName || user?.email || 'Người dùng';
 }
@@ -832,6 +843,10 @@ function productCardTemplate(product, options = {}) {
   const {
     allowBoost = true,
     allowFavorite = true,
+<<<<<<< HEAD
+=======
+    allowManageImages = false,
+>>>>>>> f380d9a (edit picture/duyet)
     allowMarkSold = false,
     markSoldLabel = 'Đánh dấu đã bán'
   } = options;
@@ -874,6 +889,10 @@ function productCardTemplate(product, options = {}) {
         <button type="button" class="btn btn-primary" data-action="detail" data-id="${product._id}">Xem chi tiết</button>
         ${allowFavorite ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">Lưu tin</button>` : ''}
         ${allowBoost ? `<button type="button" class="btn btn-tertiary" data-action="boost" data-id="${product._id}">Đẩy tin</button>` : ''}
+<<<<<<< HEAD
+=======
+        ${allowManageImages ? `<button type="button" class="btn btn-secondary" data-action="edit-images" data-id="${product._id}">Quản lý ảnh</button>` : ''}
+>>>>>>> f380d9a (edit picture/duyet)
         ${allowMarkSold && !product.isSold ? `<button type="button" class="btn btn-secondary" data-action="mark-sold" data-id="${product._id}">${markSoldLabel}</button>` : ''}
       </div>
     </article>
@@ -1029,6 +1048,10 @@ function renderMyProducts(items) {
   } else {
     myProductsList.innerHTML = activeItems.map((product) => productCardTemplate(product, {
       allowFavorite: false,
+<<<<<<< HEAD
+=======
+      allowManageImages: true,
+>>>>>>> f380d9a (edit picture/duyet)
       allowMarkSold: true,
       markSoldLabel: 'Đã bán ngoài kênh'
     })).join('');
@@ -1126,6 +1149,10 @@ function renderProductDetail(product) {
   const imageItems = product.images || [];
   const imageUrl = imageItems[0] ? `/${normalizeAssetPath(imageItems[0].url)}` : '';
   const canMessageSeller = state.currentUser && product.seller?._id !== state.currentUser.id;
+<<<<<<< HEAD
+=======
+  const isOwner = isOwnedByCurrentUser(product);
+>>>>>>> f380d9a (edit picture/duyet)
   const sellerName = product.seller?.name || 'Người bán đã xác minh';
   const gallery = imageItems.length
     ? imageItems.map((item, index) => `
@@ -1134,6 +1161,46 @@ function renderProductDetail(product) {
       </button>
     `).join('')
     : '';
+<<<<<<< HEAD
+=======
+  const imageManager = isOwner ? `
+    <section class="detail-image-manager">
+      <div class="section-head compact-head">
+        <div>
+          <p class="kicker">Quản lý ảnh</p>
+          <h3>Cập nhật ảnh cho tin đăng</h3>
+        </div>
+      </div>
+      <div class="detail-image-manager-grid">
+        ${(imageItems.length ? imageItems : []).map((item, index) => `
+          <article class="detail-image-manager-card">
+            <div class="detail-image-manager-preview">
+              <img src="/${normalizeAssetPath(item.url)}" alt="${escapeHtml(product.title)} ${index + 1}" />
+            </div>
+            <div class="detail-image-manager-copy">
+              <strong>Ảnh ${index + 1}</strong>
+              <p>Bạn có thể thay trực tiếp hoặc xóa ảnh này khỏi tin đăng.</p>
+            </div>
+            <div class="detail-image-manager-actions">
+              <button type="button" class="btn btn-secondary btn-sm" data-action="replace-product-image" data-product-id="${product._id}" data-image-id="${item._id}">Thay ảnh</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-action="remove-product-image" data-product-id="${product._id}" data-image-id="${item._id}">Xóa ảnh</button>
+            </div>
+          </article>
+        `).join('') || '<p class="field-note">Tin đăng này hiện chưa có ảnh nào. Hãy thêm ảnh mới bên dưới.</p>'}
+      </div>
+      <form id="productImageUploadForm" class="form-grid top-space" data-product-id="${product._id}">
+        <label class="field">
+          <span>Thêm ảnh mới</span>
+          <input type="file" name="images" multiple accept="image/*" />
+          <small class="field-note">Bạn có thể thêm nhiều ảnh cùng lúc, tối đa 10 ảnh cho mỗi tin đăng.</small>
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Tải ảnh lên</button>
+        </div>
+      </form>
+    </section>
+  ` : '';
+>>>>>>> f380d9a (edit picture/duyet)
 
   productDetail.innerHTML = `
     <div class="product-detail-layout">
@@ -1147,6 +1214,10 @@ function renderProductDetail(product) {
           <span class="meta-tag">${escapeHtml(formatSellingStatus(product))}</span>
           <span class="meta-tag">${escapeHtml(formatCondition(product.condition))}</span>
         </div>
+<<<<<<< HEAD
+=======
+        ${imageManager}
+>>>>>>> f380d9a (edit picture/duyet)
       </div>
       <div class="detail-content">
         <div class="detail-description-card">
@@ -1316,6 +1387,43 @@ async function markProductAsSold(productId) {
   ]);
 }
 
+<<<<<<< HEAD
+=======
+async function updateProductImages(productId, { files = [], removeImageId = '', replaceImageId = '', replaceFile = null } = {}) {
+  const formData = new FormData();
+  Array.from(files || []).forEach((file) => {
+    formData.append('images', file);
+  });
+
+  if (removeImageId) {
+    formData.append('removeImageIds', removeImageId);
+  }
+
+  if (replaceImageId && replaceFile) {
+    formData.append('replaceImageIds', replaceImageId);
+    formData.append('replaceImages', replaceFile);
+  }
+
+  const response = await apiFetch(`/api/products/${productId}`, {
+    method: 'PUT',
+    body: formData
+  });
+
+  if (normalizeRoute().name === 'product-detail' && normalizeRoute().id === productId) {
+    renderProductDetail(response.data);
+  }
+
+  await Promise.all([
+    loadMyProducts().catch(() => null),
+    loadProducts().catch(() => null),
+    loadDashboardProducts().catch(() => null),
+    loadFavorites().catch(() => null)
+  ]);
+
+  return response;
+}
+
+>>>>>>> f380d9a (edit picture/duyet)
 async function loadConversations({ silent = false } = {}) {
   if (!isAuthenticated()) {
     conversationsList.innerHTML = buildStateCard('Cần đăng nhập', 'Đăng nhập để xem các cuộc trò chuyện của bạn.', 'empty-state');
@@ -2060,6 +2168,13 @@ document.addEventListener('click', async (event) => {
     if (action === 'detail') {
       window.location.hash = `#/product/${id}`;
     }
+<<<<<<< HEAD
+=======
+    if (action === 'edit-images') {
+      state.pendingRouteMessage = 'Bạn có thể thêm, xóa hoặc thay ảnh của tin đăng trong phần quản lý ảnh ở trang chi tiết.';
+      window.location.hash = `#/product/${id}`;
+    }
+>>>>>>> f380d9a (edit picture/duyet)
     if (action === 'select-detail-image') {
       const detailMainImage = document.getElementById('detailMainImage');
       if (detailMainImage) {
@@ -2067,6 +2182,42 @@ document.addEventListener('click', async (event) => {
         detailMainImage.setAttribute('alt', actionTarget.dataset.alt || 'Ảnh sản phẩm');
       }
     }
+<<<<<<< HEAD
+=======
+    if (action === 'remove-product-image') {
+      const productId = actionTarget.dataset.productId || id;
+      const imageId = actionTarget.dataset.imageId || '';
+      if (!productId || !imageId) return;
+      if (!window.confirm('Xóa ảnh này khỏi tin đăng?')) return;
+
+      const response = await updateProductImages(productId, { removeImageId: imageId });
+      setBanner(globalMessage, response.message || 'Đã xóa ảnh khỏi tin đăng.');
+    }
+    if (action === 'replace-product-image') {
+      const productId = actionTarget.dataset.productId || id;
+      const imageId = actionTarget.dataset.imageId || '';
+      if (!productId || !imageId) return;
+
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.addEventListener('change', async () => {
+        const selectedFile = input.files && input.files[0];
+        if (!selectedFile) return;
+
+        try {
+          const response = await updateProductImages(productId, {
+            replaceImageId: imageId,
+            replaceFile: selectedFile
+          });
+          setBanner(globalMessage, response.message || 'Đã thay ảnh thành công.');
+        } catch (error) {
+          setBanner(globalMessage, error.message, 'error');
+        }
+      }, { once: true });
+      input.click();
+    }
+>>>>>>> f380d9a (edit picture/duyet)
     if (action === 'favorite') {
       await toggleFavorite(id);
     }
@@ -2264,6 +2415,38 @@ createProductForm.addEventListener('submit', async (event) => {
   }
 });
 
+<<<<<<< HEAD
+=======
+productDetail.addEventListener('submit', async (event) => {
+  const form = event.target.closest('#productImageUploadForm');
+  if (!form) return;
+
+  event.preventDefault();
+
+  const fileInput = form.elements.namedItem('images');
+  const productId = form.dataset.productId || '';
+  const files = fileInput?.files || [];
+
+  if (!productId) {
+    setBanner(globalMessage, 'Không xác định được tin đăng cần cập nhật ảnh.', 'error');
+    return;
+  }
+
+  if (!files.length) {
+    setBanner(globalMessage, 'Vui lòng chọn ít nhất một ảnh để tải lên.', 'error');
+    return;
+  }
+
+  try {
+    const response = await updateProductImages(productId, { files });
+    form.reset();
+    setBanner(globalMessage, response.message || 'Đã cập nhật ảnh cho tin đăng.');
+  } catch (error) {
+    setBanner(globalMessage, error.message, 'error');
+  }
+});
+
+>>>>>>> f380d9a (edit picture/duyet)
 profileForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   setInlineBox(profileResult, 'Đang cập nhật hồ sơ...');
