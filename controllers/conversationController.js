@@ -151,20 +151,21 @@ exports.getConversations = async (req, res) => {
       Conversation.find({ participants: req.user.id }).sort({ updatedAt: -1 })
     );
 
-    const userId = String(req.user.id);
     const conversationIds = conversations.map((item) => item._id);
-    
+    const userId = String(req.user.id);
+
     const unreadRows = conversationIds.length
       ? await Message.aggregate([
         {
           $match: {
-            conversation: { $in: conversationIds }
+            conversation: { $in: conversationIds },
+            receiver: new mongoose.Types.ObjectId(userId),
+            isRead: false
           }
         },
         {
           $group: {
             _id: '$conversation',
-            messages: { $push: { createdAt: '$createdAt', _id: '$_id' } },
             count: { $sum: 1 }
           }
         }
@@ -172,21 +173,8 @@ exports.getConversations = async (req, res) => {
       : [];
 
     const unreadMap = new Map();
-    
-    // Calculate unread count based on lastViewedAt
     unreadRows.forEach((row) => {
-      const conversationId = String(row._id);
-      const conversation = conversations.find((item) => String(item._id) === conversationId);
-      
-      if (conversation) {
-        const lastViewedAt = conversation.participantViews?.get(userId);
-        const unreadCount = row.messages.filter((msg) => {
-          if (!lastViewedAt) return true; // If never viewed, all are unread
-          return new Date(msg.createdAt) > new Date(lastViewedAt);
-        }).length;
-        
-        unreadMap.set(conversationId, unreadCount);
-      }
+      unreadMap.set(String(row._id), row.count || 0);
     });
 
     const data = conversations.map((item) => serializeConversation(item, unreadMap.get(String(item._id)) || 0));
@@ -211,6 +199,16 @@ exports.getConversationMessages = async (req, res) => {
     // Mark messages as read for receiver
     await Message.updateMany(
       { conversation: conversation._id, receiver: req.user.id, isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    await Notification.updateMany(
+      {
+        user: req.user.id,
+        type: 'message',
+        relatedId: conversation._id,
+        isRead: false
+      },
       { $set: { isRead: true } }
     );
 

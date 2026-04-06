@@ -5,6 +5,7 @@ const User = require('../schemas/User');
 const Role = require('../schemas/Role');
 const Product = require('../schemas/Product');
 const AdminActivity = require('../schemas/AdminActivity');
+const Notification = require('../schemas/Notification');
 const adminController = require('../controllers/adminController');
 
 const createRes = () => ({
@@ -80,12 +81,15 @@ test('updateUserRole changes role and logs admin activity', async () => {
 test('approveProduct marks product approved and logs admin activity', async () => {
   const originalFindById = Product.findById;
   const originalActivityCreate = AdminActivity.create;
+  const originalNotificationCreate = Notification.create;
 
   let createdActivity = null;
+  let createdNotification = null;
 
   const product = {
     _id: 'product-1',
     title: 'Laptop',
+    seller: { _id: 'seller-1' },
     status: 'pending',
     isHidden: true,
     approvedAt: null,
@@ -109,6 +113,10 @@ test('approveProduct marks product approved and logs admin activity', async () =
   });
   AdminActivity.create = async (payload) => {
     createdActivity = payload;
+    return payload;
+  };
+  Notification.create = async (payload) => {
+    createdNotification = payload;
     return payload;
   };
 
@@ -137,9 +145,17 @@ test('approveProduct marks product approved and logs admin activity', async () =
       targetId: 'product-1',
       details: { title: 'Laptop', status: 'approved' }
     });
+    assert.deepEqual(createdNotification, {
+      user: 'seller-1',
+      type: 'product',
+      title: 'Bài đăng đã được duyệt',
+      message: 'Tin đăng "Laptop" của bạn đã được duyệt và đang hiển thị trên hệ thống.',
+      relatedId: 'product-1'
+    });
   } finally {
     Product.findById = originalFindById;
     AdminActivity.create = originalActivityCreate;
+    Notification.create = originalNotificationCreate;
   }
 });
 

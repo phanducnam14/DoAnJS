@@ -37,6 +37,7 @@ const marketHeaderShell = document.querySelector('.market-header-shell');
 const headerPanelToggles = document.querySelectorAll('[data-panel-toggle]');
 const headerNavPanel = document.getElementById('headerNavPanel');
 const headerSearchPanel = document.getElementById('globalSearchForm');
+const headerNotificationsPanel = document.getElementById('headerNotificationsPanel');
 const headerSessionPanel = document.getElementById('headerSessionPanel');
 
 const globalSearchForm = document.getElementById('globalSearchForm');
@@ -60,6 +61,8 @@ const messagesBadge = document.getElementById('messagesBadge');
 const headerMessagesBadge = document.getElementById('headerMessagesBadge');
 const navMenuBadge = document.getElementById('navMenuBadge');
 const headerBarMessagesBadge = document.getElementById('headerBarMessagesBadge');
+const notificationsPanelList = document.getElementById('notificationsPanelList');
+const headerBarNotificationsBadge = document.getElementById('headerBarNotificationsBadge');
 const sellResult = document.getElementById('sellResult');
 const productFilters = document.getElementById('productFilters');
 const createProductForm = document.getElementById('createProductForm');
@@ -154,6 +157,8 @@ const state = {
   activeConversation: null,
   messages: [],
   messagePollTimer: null,
+  notifications: [],
+  notificationPollTimer: null,
   products: [],
   featuredProducts: [],
   productComparison: {
@@ -184,6 +189,11 @@ const state = {
   },
   activeHeaderPanel: null,
   pendingRouteMessage: null,
+  unreadMeta: {
+    unreadCount: null,
+    messageCount: null,
+    notificationCount: null
+  },
   admin: {
     dashboard: null,
     users: [],
@@ -195,6 +205,7 @@ const state = {
 const headerPanels = {
   nav: headerNavPanel,
   search: headerSearchPanel,
+  notifications: headerNotificationsPanel,
   session: headerSessionPanel
 };
 
@@ -231,8 +242,17 @@ function setUser(user) {
 
 function clearSession() {
   stopMessagePolling();
+  stopNotificationPolling();
+  state.notifications = [];
+  state.unreadMeta = {
+    unreadCount: 0,
+    messageCount: 0,
+    notificationCount: 0
+  };
   localStorage.removeItem('token');
   setUser(null);
+  renderNotificationsPanel();
+  updateUnreadBadge();
   updateSessionUI();
   closeHeaderPanels();
 }
@@ -994,6 +1014,34 @@ function toggleHeaderPanel(name) {
   openHeaderPanel(name);
 }
 
+function stopNotificationPolling() {
+  if (state.notificationPollTimer) {
+    window.clearInterval(state.notificationPollTimer);
+    state.notificationPollTimer = null;
+  }
+}
+
+function startNotificationPolling() {
+  stopNotificationPolling();
+  if (!isAuthenticated()) return;
+
+  state.notificationPollTimer = window.setInterval(() => {
+    loadNotifications({ silent: true, skipMarkRead: true }).catch(() => null);
+  }, 30000);
+}
+
+function revealUnreadNotifications() {
+  const unreadNotifications = state.notifications.filter((notification) => !notification.isRead);
+  if (!unreadNotifications.length) return;
+
+  openHeaderPanel('notifications');
+
+  const latestApprovalNotification = unreadNotifications.find((notification) => notification.type === 'product');
+  if (latestApprovalNotification) {
+    setBanner(globalMessage, latestApprovalNotification.message || 'Bạn có thông báo mới từ quản trị viên.');
+  }
+}
+
 function openAuthTab(tab) {
   updateAuthTabsUI(tab);
   if (tab === 'reset') {
@@ -1364,9 +1412,35 @@ function renderConversations(items) {
   }).join('');
 }
 
+function renderNotificationsPanel() {
+  if (!notificationsPanelList) return;
+
+  if (!state.notifications.length) {
+    notificationsPanelList.innerHTML = buildStateCard('Chưa có thông báo', 'Khi bài đăng của bạn được duyệt hoặc có cập nhật mới, thông báo sẽ xuất hiện tại đây.', 'empty-state');
+    return;
+  }
+
+  notificationsPanelList.innerHTML = state.notifications.map((notification) => {
+    const href = notification.relatedId ? `#/product/${notification.relatedId}` : '#/dashboard';
+    return `
+      <a href="${href}" class="notification-entry ${notification.isRead ? '' : 'is-unread'}" data-notification-id="${escapeHtml(notification._id)}">
+        <div class="notification-entry-copy">
+          <strong>${escapeHtml(notification.title || 'Thông báo hệ thống')}</strong>
+          <p>${escapeHtml(notification.message || '')}</p>
+        </div>
+        <span>${escapeHtml(formatRelativeTime(notification.createdAt))}</span>
+      </a>
+    `;
+  }).join('');
+}
+
 function updateUnreadBadge() {
-  // Calculate total unread messages
-  const totalUnread = state.conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+  const totalUnread = typeof state.unreadMeta.messageCount === 'number'
+    ? state.unreadMeta.messageCount
+    : state.conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+  const notificationUnread = typeof state.unreadMeta.notificationCount === 'number'
+    ? state.unreadMeta.notificationCount
+    : state.notifications.filter((notification) => !notification.isRead).length;
   
   // Update sidebar badge
   if (messagesBadge) {
@@ -1409,6 +1483,16 @@ function updateUnreadBadge() {
       headerBarMessagesBadge.setAttribute('aria-label', `${totalUnread} tin nhắn chưa đọc`);
     } else {
       headerBarMessagesBadge.classList.add('hidden');
+    }
+  }
+
+  if (headerBarNotificationsBadge) {
+    if (notificationUnread > 0) {
+      headerBarNotificationsBadge.textContent = notificationUnread > 9 ? '9+' : String(notificationUnread);
+      headerBarNotificationsBadge.classList.remove('hidden');
+      headerBarNotificationsBadge.setAttribute('aria-label', `${notificationUnread} thông báo chưa đọc`);
+    } else {
+      headerBarNotificationsBadge.classList.add('hidden');
     }
   }
 }

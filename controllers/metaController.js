@@ -24,7 +24,7 @@ exports.getLocations = async (req, res) => {
 exports.getUnreadNotifications = async (req, res) => {
   try {
     if (!req.user) {
-      return res.json({ success: true, data: { unreadCount: 0, messageCount: 0 } });
+      return res.json({ success: true, data: { unreadCount: 0, messageCount: 0, notificationCount: 0 } });
     }
 
     const unreadCount = await Notification.countDocuments({
@@ -38,7 +38,13 @@ exports.getUnreadNotifications = async (req, res) => {
       isRead: false
     });
 
-    res.json({ success: true, data: { unreadCount, messageCount } });
+    const notificationCount = await Notification.countDocuments({
+      user: req.user.id,
+      type: { $ne: 'message' },
+      isRead: false
+    });
+
+    res.json({ success: true, data: { unreadCount, messageCount, notificationCount } });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

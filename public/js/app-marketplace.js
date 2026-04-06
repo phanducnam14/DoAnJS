@@ -656,12 +656,29 @@ async function loadConversationMessages(conversationId, { silent = false } = {})
     messageThread.innerHTML = buildStateCard('Đang tải tin nhắn', 'Hệ thống đang tải lịch sử trao đổi.', 'loading-state');
   }
 
+  const currentConversation = state.conversations.find((item) => item._id === conversationId);
+  const previousUnreadCount = currentConversation?.unreadCount || 0;
+
   const response = await apiFetch(`/api/conversations/${conversationId}/messages`);
   state.activeConversation = response.data.conversation;
   state.activeConversationId = response.data.conversation._id;
   state.messages = response.data.messages || [];
+  state.conversations = state.conversations.map((conversation) => (
+    conversation._id === conversationId
+      ? { ...conversation, unreadCount: 0 }
+      : conversation
+  ));
+  if (previousUnreadCount > 0 && typeof state.unreadMeta.messageCount === 'number') {
+    state.unreadMeta = {
+      ...state.unreadMeta,
+      unreadCount: Math.max(0, (state.unreadMeta.unreadCount || 0) - previousUnreadCount),
+      messageCount: Math.max(0, state.unreadMeta.messageCount - previousUnreadCount)
+    };
+  }
   renderConversations(state.conversations);
   renderMessageThread();
+  updateUnreadBadge();
+  await loadUnreadMeta().catch(() => null);
 }
 
 async function startConversation(productId) {
