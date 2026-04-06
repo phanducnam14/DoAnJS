@@ -1,0 +1,41 @@
+/* ============================================================
+   RESPONSIVE — Large ≥ 1080px
+   ============================================================ */
+@media (min-width: 1080px) {
+  :root { --sticky-top: 96px; }
+
+  .app-content { padding-top: var(--sp-7); padding-bottom: var(--sp-11); }
+
+  .auth-screen {
+    grid-template-columns: minmax(0, 1.08fr) minmax(480px, 0.92fr);
+    gap: var(--sp-6);
+    padding: var(--sp-6);
+    align-items: stretch;
+  }
+
+  .browse-layout {
+    grid-template-columns: 300px minmax(0,1fr);
+    align-items: start;
+  }
+  .browse-filters-shell {
+    position: sticky;
+    top: var(--sticky-top);
+    max-height: calc(100vh - var(--sticky-top) - var(--sp-6));
+    overflow-y: auto;
+  }
+
+  .product-detail-layout { grid-template-columns: minmax(0,0.95fr) minmax(0,1fr) 300px; }
+
+  .sell-layout { grid-template-columns: 300px minmax(0,1fr); align-items: start; }
+  .sell-guide-shell { position: sticky; top: var(--sticky-top); }
+  .admin-dashboard-fact-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+  .product-grid       { grid-template-columns: repeat(3,1fr); }
+  .compact-grid       { grid-template-columns: repeat(2,1fr); }
+
+  #myProductsList.compact-grid,
+  #soldProductsList.compact-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+

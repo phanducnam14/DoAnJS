@@ -1,0 +1,19 @@
+/* ============================================================
+   RESPONSIVE — Tablet ≥ 640px
+   ============================================================ */
+@media (min-width: 640px) {
+  .container { width: min(var(--container-max), calc(100% - 40px)); }
+
+  .product-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-kv-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-dashboard-fact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-dashboard-users-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .form-grid-2 { grid-template-columns: repeat(2,1fr); }
+  .auth-metrics { grid-template-columns: repeat(3,1fr); }
+  .profile-grid-meta { grid-template-columns: repeat(2,1fr); }
+  .auth-highlights { grid-template-columns: repeat(3,1fr); }
+  .settings-list { grid-template-columns: 1fr; }
+  .sell-steps { grid-template-columns: repeat(2,1fr); }
+}
+

@@ -1,0 +1,103 @@
+  <section id="authScreen" class="auth-screen">
+
+    <!-- Hero / Brand side -->
+    <div class="auth-hero">
+      <div class="auth-badge">DoAnJS Marketplace</div>
+    </div>
+
+    <!-- Form side -->
+    <div class="auth-card">
+      <div class="auth-tabs" role="tablist" aria-label="Xác thực tài khoản">
+        <button
+          type="button" id="showLoginBtn" class="auth-tab active"
+          role="tab" aria-selected="true" aria-controls="loginPanel"
+        >Đăng nhập</button>
+        <button
+          type="button" id="showRegisterBtn" class="auth-tab"
+          role="tab" aria-selected="false" aria-controls="registerPanel"
+        >Đăng ký</button>
+      </div>
+
+      <div id="authMessage" class="feedback-banner hidden" role="status" aria-live="polite"></div>
+
+      <!-- Login panel -->
+      <section id="loginPanel" class="auth-panel active" role="tabpanel" aria-labelledby="showLoginBtn">
+        <div class="panel-head">
+          <h2>Đăng nhập để tiếp tục</h2>
+        </div>
+
+        <form id="loginForm" class="form-grid">
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="Nhập địa chỉ email" autocomplete="email" required />
+          </label>
+          <label class="field">
+            <span>Mật khẩu</span>
+            <input type="password" name="password" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
+          </label>
+          <div class="auth-support-row">
+            <button type="button" id="forgotPasswordBtn" class="inline-link auth-inline-link">Quên mật khẩu?</button>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg full">Đăng nhập</button>
+        </form>
+      </section>
+
+      <!-- Register panel -->
+      <section id="registerPanel" class="auth-panel" role="tabpanel" aria-labelledby="showRegisterBtn" hidden>
+        <div class="panel-head">
+          <h2>Tạo tài khoản mới</h2>
+        </div>
+
+        <form id="registerForm" class="form-grid">
+          <label class="field">
+            <span>Họ tên</span>
+            <input type="text" name="name" placeholder="Nhập họ và tên" autocomplete="name" required />
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="Nhập địa chỉ email" autocomplete="email" required />
+          </label>
+          <label class="field">
+            <span>Mật khẩu</span>
+            <input type="password" name="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" required />
+          </label>
+          <label class="field">
+            <span>Số điện thoại</span>
+            <input type="text" name="phone" placeholder="Nhập số điện thoại" autocomplete="tel" required />
+          </label>
+          <button type="submit" class="btn btn-primary btn-lg full">Tạo tài khoản</button>
+        </form>
+      </section>
+
+      <section id="resetPanel" class="auth-panel" role="tabpanel" aria-labelledby="forgotPasswordBtn" hidden>
+        <div class="panel-head">
+          <h2>Khôi phục mật khẩu</h2>
+          <p>Dùng email và số điện thoại đã đăng ký để đặt lại mật khẩu mới một cách an toàn.</p>
+        </div>
+
+        <form id="forgotPasswordForm" class="form-grid">
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="Nhập địa chỉ email" autocomplete="email" required />
+          </label>
+          <label class="field">
+            <span>Số điện thoại</span>
+            <input type="text" name="phone" placeholder="Nhập số điện thoại đã đăng ký" autocomplete="tel" required />
+          </label>
+          <label class="field">
+            <span>Mật khẩu mới</span>
+            <input type="password" name="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" required />
+          </label>
+          <label class="field">
+            <span>Nhập lại mật khẩu mới</span>
+            <input type="password" name="confirmPassword" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" required />
+          </label>
+          <div class="form-actions auth-panel-actions span-all">
+            <button type="submit" class="btn btn-primary">Cập nhật mật khẩu</button>
+            <button type="button" id="backToLoginBtn" class="btn btn-secondary">Quay lại đăng nhập</button>
+            <button type="button" id="backToAppBtn" class="btn btn-ghost hidden">Quay lại ứng dụng</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </section>

@@ -1,0 +1,85 @@
+/* ============================================================
+   DESIGN TOKENS — Monochrome Premium Marketplace
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap');
+
+:root {
+  /* — Color: Surface — */
+  --bg:             #f9f8f6;
+  --bg-paper:       #ffffff;
+  --bg-subtle:      #f4f3f0;
+  --bg-muted:       #edece8;
+  --bg-dark:        #111110;
+  --bg-dark-soft:   #1a1a18;
+
+  /* — Color: Text — */
+  --ink:            #0d0d0c;
+  --ink-soft:       #2c2c2a;
+  --ink-muted:      #6b6a66;
+  --ink-faint:      #a8a7a2;
+  --ink-invert:     #f9f8f6;
+
+  /* — Color: Border — */
+  --line:           rgba(13, 13, 12, 0.08);
+  --line-mid:       rgba(13, 13, 12, 0.14);
+  --line-strong:    rgba(13, 13, 12, 0.22);
+  --line-invert:    rgba(249, 248, 246, 0.12);
+
+  /* — Color: Accent (tiết chế, chỉ dùng cho interactive states) — */
+  --accent:         #0d0d0c;
+  --accent-hover:   #2c2c2a;
+
+  /* — Color: Semantic — */
+  --ok:             #2d6a4f;
+  --ok-bg:          #e8f5ed;
+  --warn:           #92400e;
+  --warn-bg:        #fef3c7;
+  --danger:         #991b1b;
+  --danger-bg:      #fee2e2;
+
+  /* — Shadow — */
+  --shadow-xs:      0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm:      0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:      0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-lg:      0 20px 48px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.05);
+  --shadow-xl:      0 32px 80px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.06);
+
+  /* — Radius — */
+  --r-xs:   6px;
+  --r-sm:   10px;
+  --r-md:   14px;
+  --r-lg:   20px;
+  --r-xl:   28px;
+  --r-full: 9999px;
+
+  /* — Spacing — */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-7:  32px;
+  --sp-8:  40px;
+  --sp-9:  48px;
+  --sp-10: 64px;
+  --sp-11: 80px;
+
+  /* — Typography — */
+  --font-sans:    'Manrope', 'Segoe UI', system-ui, sans-serif;
+  --font-serif:   'DM Serif Display', Georgia, serif;
+
+  /* — Motion — */
+  --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:   cubic-bezier(0.4, 0, 1, 1);
+  --ease-std:  cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast:  140ms;
+  --dur-std:   220ms;
+  --dur-slow:  360ms;
+
+  /* — Layout — */
+  --header-h:       64px;
+  --sticky-top:     80px;
+  --container-max:  1320px;
+}
+

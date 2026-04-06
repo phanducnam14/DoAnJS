@@ -1,0 +1,30 @@
+/* ============================================================
+   SELL PAGE
+   ============================================================ */
+.sell-layout { display: grid; gap: var(--sp-6); }
+.sell-guide-shell {
+  padding: var(--sp-6) var(--sp-7);
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  align-content: start;
+}
+.sell-form-shell {
+  padding: var(--sp-7);
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+}
+
+.sell-steps { display: grid; gap: var(--sp-3); margin-top: var(--sp-2); }
+.sell-step {
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  display: grid;
+  gap: var(--sp-2);
+}
+.sell-step strong { font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+.sell-step p      { font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
+

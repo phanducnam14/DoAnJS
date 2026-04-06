@@ -1,0 +1,18 @@
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.site-footer { padding: 0 0 var(--sp-9); }
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-5) var(--sp-7);
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+}
+.footer-inner span { font-size: 12px; color: var(--ink-faint); font-weight: 600; }
+.footer-inner span:first-child { font-weight: 700; color: var(--ink-soft); }
+

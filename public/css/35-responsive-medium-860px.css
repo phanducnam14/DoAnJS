@@ -1,0 +1,33 @@
+/* ============================================================
+   RESPONSIVE — Medium ≥ 860px
+   ============================================================ */
+@media (min-width: 860px) {
+  .header-bar-note { display: flex; align-items: center; gap: var(--sp-3); }
+
+  .browse-lanes       { grid-template-columns: repeat(3,1fr); }
+  .manage-overview-grid { grid-template-columns: repeat(3,1fr); }
+  .profile-product-columns { grid-template-columns: repeat(2,1fr); }
+  .admin-kv-grid { grid-template-columns: repeat(3,1fr); }
+
+  .page-intro-shell   { grid-template-columns: 1fr minmax(280px, 0.75fr); }
+  .market-hero-shell  { grid-template-columns: minmax(0,1.1fr) minmax(0,0.9fr); }
+  .dashboard-stream   { grid-template-columns: minmax(0,1.25fr) minmax(0,0.75fr); }
+  .admin-dashboard-command-bar { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+  .admin-dashboard-command-actions { justify-items: end; }
+  .admin-dashboard-command-links { justify-content: flex-end; }
+  .admin-dashboard-layout { grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.82fr); align-items: start; }
+  .admin-dashboard-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .admin-dashboard-metrics .admin-dashboard-metric-card.is-emphasis { grid-column: span 2; }
+  .admin-dashboard-users-list { grid-template-columns: 1fr; }
+  .profile-layout     { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .settings-layout    { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+
+  .profile-hero       { grid-template-columns: 80px minmax(0,1fr); }
+
+  .messages-layout    { grid-template-columns: 320px minmax(0,1fr); align-items: start; }
+  .messages-sidebar   { position: sticky; top: var(--sticky-top); }
+
+  .detail-info-grid   { grid-template-columns: repeat(2,1fr); }
+  .hero-stat-grid     { grid-template-columns: repeat(3,1fr); }
+}
+
