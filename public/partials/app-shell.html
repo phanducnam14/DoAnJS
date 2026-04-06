@@ -81,6 +81,7 @@
                  <a href="#/admin-dashboard"  data-route="admin-dashboard"  data-admin-only class="hidden">Tổng quan quản trị</a>
                  <a href="#/admin-users"      data-route="admin-users"      data-admin-only class="hidden">Quản lý người dùng</a>
                  <a href="#/admin-posts"      data-route="admin-posts"      data-admin-only class="hidden">Kiểm duyệt tin</a>
+                 <a href="#/admin-reports"    data-route="admin-reports"    data-admin-only class="hidden">Xử lý báo cáo</a>
                  <a href="#/admin-activities" data-route="admin-activities" data-admin-only class="hidden">Nhật ký quản trị</a>
                </nav>
 
@@ -732,6 +733,11 @@
                     <strong>Điều phối kiểm duyệt</strong>
                     <p>Duyệt, từ chối hoặc ẩn các tin cần can thiệp trước khi xuất hiện công khai.</p>
                   </a>
+                  <a href="#/admin-reports" class="admin-dashboard-tool-card">
+                    <span class="kicker">Báo cáo</span>
+                    <strong>Xử lý phản ánh</strong>
+                    <p>Xem các báo cáo từ người dùng để rà soát và quyết định hướng xử lý phù hợp.</p>
+                  </a>
                   <a href="#/admin-activities" class="admin-dashboard-tool-card">
                     <span class="kicker">Nhật ký</span>
                     <strong>Đối soát thao tác</strong>
@@ -816,6 +822,33 @@
       </section>
 
       <!-- ======================================================
+           ADMIN REPORTS
+           ====================================================== -->
+      <section class="page" data-page="admin-reports">
+        <section class="manage-overview-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Quản trị phản ánh</p>
+              <h3>Xử lý báo cáo tin đăng</h3>
+              <p class="section-helper">Tổng hợp các phản ánh từ người dùng để kiểm tra mức độ hợp lệ và hỗ trợ quyết định kiểm duyệt.</p>
+            </div>
+            <button id="refreshAdminReportsBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+          </div>
+          <div id="adminReportMetrics" class="manage-overview-grid"></div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="section-head section-head-wrap compact-head">
+            <div>
+              <p class="kicker">Danh sách báo cáo</p>
+              <h3>Các phản ánh cần xử lý</h3>
+            </div>
+          </div>
+          <div id="adminReportsList" class="admin-record-list"></div>
+        </section>
+      </section>
+
+      <!-- ======================================================
            ADMIN ACTIVITIES
            ====================================================== -->
       <section class="page" data-page="admin-activities">
@@ -843,6 +876,60 @@
       </section>
 
     </main><!-- /app-content -->
+
+    <section id="productReportModal" class="report-modal-shell" aria-hidden="true" hidden>
+      <div class="report-modal-backdrop" data-action="close-report-modal"></div>
+      <div class="report-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="productReportTitle" aria-describedby="productReportDescription">
+        <div class="report-modal-panel">
+          <div class="report-modal-head">
+            <div>
+              <p class="kicker">Phản ánh tin đăng</p>
+              <h3 id="productReportTitle">Gửi báo cáo cho quản trị viên</h3>
+              <p id="productReportDescription" class="section-helper">Chọn lý do phù hợp và mô tả ngắn để đội ngũ kiểm duyệt kiểm tra nhanh hơn.</p>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm report-modal-close" data-action="close-report-modal" aria-label="Đóng biểu mẫu báo cáo">Đóng</button>
+          </div>
+
+          <form id="productReportForm" class="report-modal-form" novalidate>
+            <div class="report-modal-product-card">
+              <span class="comparison-label">Tin cần xem xét</span>
+              <strong id="productReportProductTitle">Tin đăng đang xem</strong>
+              <p class="field-note">Thông tin này sẽ được gửi cùng nội dung phản ánh để phục vụ kiểm duyệt.</p>
+            </div>
+
+            <div class="field">
+              <span>Lý do báo cáo</span>
+              <div id="productReportReasonOptions" class="report-reason-grid" role="radiogroup" aria-label="Lý do báo cáo"></div>
+            </div>
+
+            <label class="field" for="productReportReasonText">
+              <span>Giải thích chi tiết</span>
+              <textarea id="productReportReasonText" name="reasonText" rows="5" maxlength="500" placeholder="Mô tả ngắn điều gì khiến bạn cho rằng tin đăng này cần được xem xét." required></textarea>
+              <small class="field-note">Nội dung cụ thể giúp quản trị viên xử lý chính xác hơn.</small>
+            </label>
+
+            <div id="productReportFeedback" class="inline-box" role="status" aria-live="polite"></div>
+
+            <div class="form-actions report-modal-actions">
+              <button type="button" class="btn btn-secondary" data-action="close-report-modal">Hủy</button>
+              <button id="productReportSubmitBtn" type="submit" class="btn btn-primary">Gửi báo cáo</button>
+            </div>
+          </form>
+
+          <div id="productReportSuccess" class="report-modal-success" hidden>
+            <div class="report-modal-success-mark" aria-hidden="true">✓</div>
+            <div class="report-modal-success-copy">
+              <p class="kicker">Đã tiếp nhận</p>
+              <h4>Báo cáo đã được gửi</h4>
+              <p id="productReportSuccessText">Chúng tôi sẽ chuyển phản ánh này tới nhóm kiểm duyệt để xem xét.</p>
+            </div>
+            <div class="form-actions report-modal-actions">
+              <button type="button" class="btn btn-primary" data-action="close-report-modal">Hoàn tất</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- FOOTER -->
     <footer class="site-footer">

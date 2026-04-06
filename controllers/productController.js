@@ -4,10 +4,12 @@ const fs = require('fs/promises');
 const path = require('path');
 
 const Product = require('../schemas/Product');
+const ProductReport = require('../schemas/ProductReport');
 const Location = require('../schemas/Location');
 const { protect } = require('../utils/jwt');
 const { uploadImages, uploadProductImages } = require('../utils/upload');
 const Image = require('../schemas/Image');
+const mongoose = require('mongoose');
 
 const PRODUCT_UPDATE_FIELDS = ['title', 'description', 'price', 'condition', 'category', 'subCategory', 'location', 'isSold'];
 const PUBLIC_SELLER_FIELDS = 'name email phone avatar role location createdAt updatedAt';
@@ -18,6 +20,8 @@ const MODERATION_RESET_FIELDS = ['title', 'description', 'price', 'condition', '
 const MAX_PRODUCT_IMAGES = 10;
 const DEFAULT_COMPARE_LIMIT = 4;
 const MAX_COMPARE_LIMIT = 8;
+const REPORT_REASON_CODES = ['fraud', 'spam', 'wrong_category', 'prohibited_item', 'duplicate', 'sold_already', 'other'];
+const REPORT_TEXT_LIMIT = 500;
 
 const normalizeCompareLimit = (value) => {
   const parsed = Number.parseInt(value, 10);
@@ -165,6 +169,11 @@ const deleteImageDocuments = async (images) => {
   await removeImageFiles(images);
 };
 
+const canAccessProductDetail = (product, req) => {
+  const isOwner = String(product?.seller?._id || product?.seller) === String(req.user?.id);
+  return isOwner || isAdminRequest(req) || (product?.status === 'approved' && !product?.isHidden);
+};
+
 // @desc Create product
 // @route POST /api/products
 exports.createProduct = [protect, uploadImages, async (req, res, next) => {
@@ -241,8 +250,7 @@ exports.getProduct = async (req, res, next) => {
       .populate('seller', PUBLIC_SELLER_FIELDS)
       .populate('category subCategory location images');
     if (!product) return res.status(404).json({ message: 'Product not found' });
-    const isOwner = String(product.seller?._id || product.seller) === String(req.user?.id);
-    if ((product.status !== 'approved' || product.isHidden) && !isOwner && !isAdminRequest(req)) {
+    if (!canAccessProductDetail(product, req)) {
       return res.status(404).json({ message: 'Product not found' });
     }
     product.views += 1;
@@ -266,8 +274,7 @@ exports.getProductComparisons = async (req, res, next) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    const isOwner = String(currentProduct.seller?._id || currentProduct.seller) === String(req.user?.id);
-    if ((currentProduct.status !== 'approved' || currentProduct.isHidden) && !isOwner && !isAdminRequest(req)) {
+    if (!canAccessProductDetail(currentProduct, req)) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
@@ -304,6 +311,79 @@ exports.getProductComparisons = async (req, res, next) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// @desc Report product
+// @route POST /api/products/:id/report
+exports.reportProduct = [protect, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: 'Product id is invalid' });
+    }
+
+    const reasonText = String(req.body.reasonText || req.body.reason || '').trim();
+    const reasonCode = REPORT_REASON_CODES.includes(String(req.body.reasonCode || '').trim())
+      ? String(req.body.reasonCode).trim()
+      : 'other';
+
+    if (!reasonText) {
+      return res.status(400).json({ message: 'Reason is required' });
+    }
+
+    if (reasonText.length > REPORT_TEXT_LIMIT) {
+      return res.status(400).json({ message: `Reason must be at most ${REPORT_TEXT_LIMIT} characters` });
+    }
+
+    const product = await Product.findById(req.params.id)
+      .populate('seller', PUBLIC_SELLER_FIELDS)
+      .populate('category subCategory location images');
+
+    if (!product || !canAccessProductDetail(product, req) || product.isSold) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    if (String(product.seller?._id || product.seller) === String(req.user.id)) {
+      return res.status(400).json({ message: 'Cannot report your own product' });
+    }
+
+    const existingPendingReport = await ProductReport.findOne({
+      product: product._id,
+      reporter: req.user.id,
+      status: 'pending'
+    });
+
+    if (existingPendingReport) {
+      return res.status(400).json({ message: 'You already have a pending report for this product' });
+    }
+
+    const report = await ProductReport.create({
+      product: product._id,
+      reporter: req.user.id,
+      seller: product.seller?._id || product.seller,
+      reasonCode,
+      reasonText,
+      productSnapshot: {
+        title: product.title,
+        price: Number(product.price) || 0
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Báo cáo đã được gửi đến quản trị viên để xem xét.',
+      data: report
+    });
+  } catch (err) {
+    if (err?.code === 11000) {
+      return res.status(400).json({ message: 'You already have a pending report for this product' });
+    }
+
+    if (err?.name === 'ValidationError') {
+      return res.status(400).json({ message: err.message });
+    }
+
+    res.status(500).json({ message: err.message });
+  }
+}];
 
 // @desc Get products of current seller
 exports.getMyProducts = [protect, async (req, res, next) => {

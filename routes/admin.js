@@ -8,6 +8,8 @@ const router = express.Router();
 router.use(protect, authorize('admin'));
 
 router.get('/dashboard', adminController.getDashboard);
+router.get('/reports', adminController.getReports);
+router.put('/reports/:id/review', adminController.reviewReport);
 router.get('/users', adminController.getUsers);
 router.put('/users/:id/role', adminController.updateUserRole);
 router.put('/users/:id/ban', adminController.updateUserBan);

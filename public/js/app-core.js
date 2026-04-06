@@ -49,6 +49,15 @@ const dashboardProducts = document.getElementById('dashboardProducts');
 const productsList = document.getElementById('productsList');
 const favoritesList = document.getElementById('favoritesList');
 const productDetail = document.getElementById('productDetail');
+const productReportModal = document.getElementById('productReportModal');
+const productReportForm = document.getElementById('productReportForm');
+const productReportProductTitle = document.getElementById('productReportProductTitle');
+const productReportReasonOptions = document.getElementById('productReportReasonOptions');
+const productReportReasonText = document.getElementById('productReportReasonText');
+const productReportFeedback = document.getElementById('productReportFeedback');
+const productReportSubmitBtn = document.getElementById('productReportSubmitBtn');
+const productReportSuccess = document.getElementById('productReportSuccess');
+const productReportSuccessText = document.getElementById('productReportSuccessText');
 const profileSummary = document.getElementById('profileSummary');
 const profileResult = document.getElementById('profileResult');
 const myProductsList = document.getElementById('myProductsList');
@@ -87,6 +96,7 @@ const myPostsSoldCount = document.getElementById('myPostsSoldCount');
 const refreshAdminDashboardBtn = document.getElementById('refreshAdminDashboardBtn');
 const refreshAdminUsersBtn = document.getElementById('refreshAdminUsersBtn');
 const refreshAdminProductsBtn = document.getElementById('refreshAdminProductsBtn');
+const refreshAdminReportsBtn = document.getElementById('refreshAdminReportsBtn');
 const refreshAdminActivitiesBtn = document.getElementById('refreshAdminActivitiesBtn');
 const adminDashboardMetrics = document.getElementById('adminDashboardMetrics');
 const adminDashboardUsersPreview = document.getElementById('adminDashboardUsersPreview');
@@ -96,6 +106,8 @@ const adminUserMetrics = document.getElementById('adminUserMetrics');
 const adminUsersList = document.getElementById('adminUsersList');
 const adminProductMetrics = document.getElementById('adminProductMetrics');
 const adminProductsList = document.getElementById('adminProductsList');
+const adminReportMetrics = document.getElementById('adminReportMetrics');
+const adminReportsList = document.getElementById('adminReportsList');
 const adminActivityMetrics = document.getElementById('adminActivityMetrics');
 const adminActivitiesList = document.getElementById('adminActivitiesList');
 
@@ -116,6 +128,15 @@ const profileNameInput = profileForm.elements.namedItem('name');
 const profilePhoneInput = profileForm.elements.namedItem('phone');
 
 const CATEGORY_VISIBLE_COUNT = 10;
+const REPORT_REASON_OPTIONS = [
+  { code: 'fraud', label: 'Nghi ngờ lừa đảo' },
+  { code: 'spam', label: 'Tin rác hoặc quảng cáo' },
+  { code: 'wrong_category', label: 'Sai danh mục' },
+  { code: 'prohibited_item', label: 'Hàng hóa không phù hợp' },
+  { code: 'duplicate', label: 'Tin trùng lặp' },
+  { code: 'sold_already', label: 'Tin đã bán nhưng chưa gỡ' },
+  { code: 'other', label: 'Lý do khác' }
+];
 const ICONS = {
   grid: '<rect x="4" y="4" width="6" height="6" rx="1.25"></rect><rect x="14" y="4" width="6" height="6" rx="1.25"></rect><rect x="4" y="14" width="6" height="6" rx="1.25"></rect><rect x="14" y="14" width="6" height="6" rx="1.25"></rect>',
   house: '<path d="M3 11.5 12 4l9 7.5"></path><path d="M6.5 10.5V20h11V10.5"></path><path d="M10 20v-5h4v5"></path>',
@@ -167,6 +188,14 @@ const state = {
     criteria: null,
     error: ''
   },
+  productReport: {
+    open: false,
+    productId: '',
+    productTitle: '',
+    submitting: false,
+    success: false,
+    reportedProductIds: []
+  },
   manualComparison: {
     active: false,
     categoryId: '',
@@ -198,6 +227,7 @@ const state = {
     dashboard: null,
     users: [],
     products: [],
+    reports: [],
     activities: []
   }
 };
@@ -385,7 +415,7 @@ function isAdminUser(user = state.currentUser) {
 }
 
 function isAdminRoute(name) {
-  return ['admin-dashboard', 'admin-users', 'admin-posts', 'admin-activities'].includes(name);
+  return ['admin-dashboard', 'admin-users', 'admin-posts', 'admin-reports', 'admin-activities'].includes(name);
 }
 
 function updateAdminNavigation() {
@@ -501,6 +531,35 @@ function canMessageProductSeller(product) {
   return Boolean(state.currentUser?.id) && !isAdminUser() && !isOwnedByCurrentUser(product) && !product?.isSold;
 }
 
+function canReportProduct(product) {
+  return Boolean(state.currentUser?.id) && !isAdminUser() && !isOwnedByCurrentUser(product) && !product?.isSold;
+}
+
+function formatReportReasonLabel(value) {
+  const match = REPORT_REASON_OPTIONS.find((item) => item.code === String(value || '').trim());
+  return match?.label || 'Lý do khác';
+}
+
+function buildReportReasonPromptText() {
+  return REPORT_REASON_OPTIONS.map((item, index) => `${index + 1}. ${item.label}`).join('\n');
+}
+
+function hasSubmittedProductReport(productId) {
+  const targetId = String(productId || '');
+  return Boolean(targetId) && state.productReport.reportedProductIds.includes(targetId);
+}
+
+function buildProductReportReasonOptions(selectedReasonCode = REPORT_REASON_OPTIONS[0]?.code || '') {
+  return REPORT_REASON_OPTIONS.map((item) => `
+    <label class="report-reason-option">
+      <input type="radio" name="reasonCode" value="${escapeHtml(item.code)}"${item.code === selectedReasonCode ? ' checked' : ''} required />
+      <span class="report-reason-option-body">
+        <strong>${escapeHtml(item.label)}</strong>
+      </span>
+    </label>
+  `).join('');
+}
+
 function getUserLabel(user) {
   return user?.name || user?.fullName || user?.email || 'Người dùng';
 }
@@ -553,6 +612,8 @@ function formatActivityAction(action) {
     reject_product: 'Từ chối tin',
     hide_product: 'Ẩn tin',
     unhide_product: 'Hiện lại tin',
+    review_report: 'Xem xét báo cáo',
+    dismiss_report: 'Bỏ qua báo cáo',
     update_role: 'Cập nhật quyền',
     change_role: 'Cập nhật quyền',
     role_update: 'Cập nhật quyền',
@@ -626,6 +687,7 @@ function normalizeAdminDashboard(payload = {}) {
     totalProducts: pickNumber(metrics.totalProducts, payload.totalProducts, metrics.productCount, payload.productCount),
     pendingProducts: pickNumber(metrics.pendingProducts, payload.pendingProducts),
     approvedProducts: pickNumber(metrics.approvedProducts, payload.approvedProducts),
+    pendingReports: pickNumber(metrics.pendingReports, payload.pendingReports),
     totalActivities: pickNumber(metrics.totalActivities, payload.totalActivities, metrics.activityCount, payload.activityCount),
     recentUsers: pickArray(payload.recentUsers, payload.users),
     recentProducts: pickArray(payload.pendingItems, payload.pendingProducts, payload.products),
@@ -717,6 +779,136 @@ function setInlineBox(element, message, type = 'info') {
   if (type === 'success') {
     element.classList.add('success');
   }
+}
+
+function clearInlineBox(element) {
+  if (!element) return;
+  element.textContent = '';
+  element.classList.remove('error', 'success');
+}
+
+function resetProductReportForm() {
+  productReportForm?.reset();
+
+  if (productReportReasonOptions) {
+    productReportReasonOptions.innerHTML = buildProductReportReasonOptions();
+  }
+
+  clearInlineBox(productReportFeedback);
+}
+
+function renderProductReportModal() {
+  if (!productReportModal) return;
+
+  const { open, productTitle, submitting, success } = state.productReport;
+  productReportModal.hidden = !open;
+  productReportModal.setAttribute('aria-hidden', String(!open));
+  document.body.classList.toggle('report-modal-open', open);
+
+  if (!open) {
+    return;
+  }
+
+  if (productReportProductTitle) {
+    productReportProductTitle.textContent = productTitle || 'Tin đăng đang xem';
+  }
+
+  if (productReportSuccessText) {
+    productReportSuccessText.textContent = productTitle
+      ? `Báo cáo cho tin đăng "${productTitle}" đã được gửi tới quản trị viên để xem xét.`
+      : 'Báo cáo đã được gửi tới quản trị viên để xem xét.';
+  }
+
+  if (productReportForm) {
+    productReportForm.hidden = success;
+  }
+
+  if (productReportSuccess) {
+    productReportSuccess.hidden = !success;
+  }
+
+  if (productReportReasonText) {
+    productReportReasonText.disabled = submitting || success;
+  }
+
+  productReportForm?.querySelectorAll('input[name="reasonCode"]').forEach((input) => {
+    input.disabled = submitting || success;
+  });
+
+  productReportModal.querySelectorAll('button[data-action="close-report-modal"]').forEach((button) => {
+    button.disabled = submitting;
+  });
+
+  if (productReportSubmitBtn) {
+    productReportSubmitBtn.disabled = submitting || success;
+    productReportSubmitBtn.textContent = submitting ? 'Đang gửi báo cáo...' : 'Gửi báo cáo';
+  }
+}
+
+function focusProductReportModal() {
+  if (!state.productReport.open) return;
+
+  window.requestAnimationFrame(() => {
+    const target = state.productReport.success
+      ? productReportSuccess?.querySelector('[data-action="close-report-modal"]')
+      : productReportForm?.querySelector('input[name="reasonCode"]:checked');
+
+    target?.focus();
+  });
+}
+
+function openProductReportModal({ productId, productTitle }) {
+  const targetId = String(productId || '');
+  if (!targetId || hasSubmittedProductReport(targetId)) return;
+
+  closeHeaderPanels();
+  state.productReport.open = true;
+  state.productReport.productId = targetId;
+  state.productReport.productTitle = String(productTitle || 'Tin đăng đang xem').trim() || 'Tin đăng đang xem';
+  state.productReport.submitting = false;
+  state.productReport.success = false;
+
+  resetProductReportForm();
+  renderProductReportModal();
+  focusProductReportModal();
+}
+
+function closeProductReportModal({ force = false } = {}) {
+  if (!force && state.productReport.submitting) return;
+  if (!state.productReport.open && !force) return;
+
+  state.productReport.open = false;
+  state.productReport.productId = '';
+  state.productReport.productTitle = '';
+  state.productReport.submitting = false;
+  state.productReport.success = false;
+
+  resetProductReportForm();
+  renderProductReportModal();
+}
+
+function syncProductReportCallToAction(productId) {
+  const targetId = String(productId || '');
+  if (!targetId || !productDetail) return;
+
+  const trigger = productDetail.querySelector(`[data-report-product-id="${targetId}"]`);
+  if (!(trigger instanceof HTMLButtonElement)) return;
+
+  trigger.disabled = true;
+  trigger.textContent = 'Đã gửi báo cáo';
+  trigger.classList.add('product-report-complete');
+  trigger.setAttribute('aria-disabled', 'true');
+}
+
+function markProductReportSubmitted(productId) {
+  const targetId = String(productId || '');
+  if (!targetId) return;
+
+  if (!state.productReport.reportedProductIds.includes(targetId)) {
+    state.productReport.reportedProductIds = [...state.productReport.reportedProductIds, targetId];
+  }
+
+  syncProductReportCallToAction(targetId);
 }
 
 function buildStateCard(title, text, stateClass) {

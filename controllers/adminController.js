@@ -1,6 +1,7 @@
 const User = require('../schemas/User');
 const Role = require('../schemas/Role');
 const Product = require('../schemas/Product');
+const ProductReport = require('../schemas/ProductReport');
 const AdminActivity = require('../schemas/AdminActivity');
 const Notification = require('../schemas/Notification');
 const { sanitizeUser, pickAllowedFields } = require('../utils/response');
@@ -18,6 +19,14 @@ const ADMIN_PRODUCT_POPULATE = [
 ];
 
 const PRODUCT_STATUS_FILTERS = ['pending', 'approved', 'rejected'];
+const REPORT_STATUS_FILTERS = ['pending', 'reviewed', 'dismissed'];
+const ADMIN_REPORT_NOTE_LIMIT = 500;
+const ADMIN_REPORT_POPULATE = [
+  { path: 'product', populate: [{ path: 'seller', select: 'name email phone isBanned' }, { path: 'category', select: 'name' }, { path: 'location', select: 'province district ward address' }] },
+  { path: 'reporter', select: 'name email phone isBanned' },
+  { path: 'seller', select: 'name email phone isBanned' },
+  { path: 'reviewedBy', select: 'name email' }
+];
 
 const readReason = (value) => String(value || '').trim();
 
@@ -71,6 +80,33 @@ const serializeUser = (user) => {
   };
 };
 
+const attachProductReportStats = async (products) => {
+  const items = Array.isArray(products) ? products : [];
+  const productIds = items.map((product) => product?._id).filter(Boolean);
+  if (productIds.length === 0) return items;
+
+  const stats = await ProductReport.aggregate([
+    { $match: { product: { $in: productIds } } },
+    { $group: { _id: { product: '$product', status: '$status' }, count: { $sum: 1 } } }
+  ]);
+
+  const statsMap = new Map();
+  stats.forEach((entry) => {
+    const productId = String(entry?._id?.product || '');
+    const status = String(entry?._id?.status || 'pending');
+    const current = statsMap.get(productId) || { pending: 0, reviewed: 0, dismissed: 0, total: 0 };
+    current[status] = entry.count;
+    current.total += entry.count;
+    statsMap.set(productId, current);
+  });
+
+  items.forEach((product) => {
+    product.reportStats = statsMap.get(String(product?._id || '')) || { pending: 0, reviewed: 0, dismissed: 0, total: 0 };
+  });
+
+  return items;
+};
+
 exports.getDashboard = async (req, res) => {
   try {
     const adminRole = await Role.findOne({ name: 'admin' });
@@ -84,6 +120,7 @@ exports.getDashboard = async (req, res) => {
       hiddenProducts,
       soldProducts,
       boostedProducts,
+      pendingReports,
       latestActivities,
       totalAdmins,
       recentUsers,
@@ -99,12 +136,15 @@ exports.getDashboard = async (req, res) => {
       Product.countDocuments({ isHidden: true }),
       Product.countDocuments({ isSold: true }),
       Product.countDocuments({ isBoosted: true }),
+      ProductReport.countDocuments({ status: 'pending' }),
       AdminActivity.find().sort({ createdAt: -1 }).limit(5).populate('admin', 'name email'),
       adminRole ? User.countDocuments({ role: adminRole._id }) : 0,
       User.find().populate('role location').sort({ createdAt: -1 }).limit(5),
       Product.find({ status: 'pending' }).populate(ADMIN_PRODUCT_POPULATE).sort({ createdAt: -1 }).limit(5),
       AdminActivity.countDocuments()
     ]);
+
+    await attachProductReportStats(recentProducts);
 
     res.json({
       success: true,
@@ -121,6 +161,7 @@ exports.getDashboard = async (req, res) => {
           hiddenProducts,
           soldProducts,
           boostedProducts,
+          pendingReports,
           totalActivities
         },
         recentUsers: recentUsers.map(serializeUser),
@@ -130,6 +171,72 @@ exports.getDashboard = async (req, res) => {
       }
     });
   } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getReports = async (req, res) => {
+  try {
+    const query = {};
+
+    if (req.query.status && REPORT_STATUS_FILTERS.includes(req.query.status)) {
+      query.status = req.query.status;
+    }
+
+    const reports = await ProductReport.find(query)
+      .populate(ADMIN_REPORT_POPULATE)
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: reports });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.reviewReport = async (req, res) => {
+  try {
+    if (!ensureValidObjectId(req.params.id, res, 'Report id')) return;
+
+    const status = String(req.body.status || '').trim();
+    if (!['reviewed', 'dismissed'].includes(status)) {
+      return res.status(400).json({ message: 'Report status is invalid' });
+    }
+
+    const adminNote = readReason(req.body.adminNote);
+    const report = await ProductReport.findById(req.params.id).populate(ADMIN_REPORT_POPULATE);
+    if (!report) {
+      return res.status(404).json({ message: 'Report not found' });
+    }
+
+    if (report.status !== 'pending') {
+      return res.status(400).json({ message: 'Only pending reports can be reviewed' });
+    }
+
+    if (adminNote.length > ADMIN_REPORT_NOTE_LIMIT) {
+      return res.status(400).json({ message: `Admin note must be at most ${ADMIN_REPORT_NOTE_LIMIT} characters` });
+    }
+
+    report.status = status;
+    report.reviewedBy = req.user.id;
+    report.reviewedAt = new Date();
+    report.adminNote = adminNote;
+    await report.save();
+    await report.populate(ADMIN_REPORT_POPULATE);
+
+    await logAdminActivity(req.user.id, status === 'dismissed' ? 'dismiss_report' : 'review_report', 'report', report._id, {
+      product: report.product?._id || report.product,
+      productTitle: report.product?.title || report.productSnapshot?.title || '',
+      reporter: report.reporter?._id || report.reporter,
+      status,
+      adminNote
+    });
+
+    res.json({ success: true, data: report });
+  } catch (err) {
+    if (err?.name === 'ValidationError') {
+      return res.status(400).json({ message: err.message });
+    }
+
     res.status(500).json({ message: err.message });
   }
 };
@@ -270,6 +377,8 @@ exports.getProducts = async (req, res) => {
     const products = await Product.find(query)
       .populate(ADMIN_PRODUCT_POPULATE)
       .sort({ createdAt: -1 });
+
+    await attachProductReportStats(products);
 
     res.json({ success: true, data: products });
   } catch (err) {
