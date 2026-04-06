@@ -19,6 +19,8 @@ function renderProductDetail(product) {
   const canMessageSeller = canMessageProductSeller(product);
   const canFavoriteNow = canFavoriteProduct(product);
   const canBoostNow = canBoostProduct(product);
+  const canReportNow = canReportProduct(product);
+  const hasReportedNow = hasSubmittedProductReport(product._id);
   const moderation = getModerationStatus(product);
   const sellerName = product.seller?.name || 'Người bán đã xác minh';
   const gallery = galleryItems.length
@@ -146,6 +148,7 @@ function renderProductDetail(product) {
         <div class="detail-contact-actions">
           ${canMessageSeller ? `<button type="button" class="btn btn-primary" data-action="start-conversation" data-id="${product._id}">${buildButtonLabel('message', 'Nhắn tin người bán')}</button>` : ''}
           ${canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">${buildButtonLabel('heart', 'Lưu tin')}</button>` : ''}
+          ${canReportNow ? `<button type="button" class="btn btn-secondary${hasReportedNow ? ' product-report-complete' : ''}" data-action="report" data-id="${product._id}" data-report-product-id="${product._id}" data-product-title="${escapeHtml(product.title)}"${hasReportedNow ? ' disabled aria-disabled="true"' : ''}>${hasReportedNow ? 'Đã gửi báo cáo' : 'Báo cáo tin đăng'}</button>` : ''}
           <button type="button" class="btn btn-secondary" data-action="compare" data-id="${product._id}">So sánh cùng danh mục</button>
           ${canBoostNow ? `<button type="button" class="btn btn-secondary" data-action="boost" data-id="${product._id}">${buildButtonLabel('rocket', 'Đẩy tin')}</button>` : ''}
           <a href="#/products" class="btn btn-secondary">${buildButtonLabel('arrow-left', 'Quay lại danh sách')}</a>
@@ -814,6 +817,7 @@ function adminDashboardProductWorkbenchTemplate(product) {
   const canUnhide = canModerate && moderation.key === 'hidden';
   const categoryName = product?.category?.name || product?.categoryName || 'Danh mục chưa rõ';
   const sellerName = getUserLabel(product?.seller);
+  const reportCount = Number(product?.reportStats?.pending || 0);
 
   return `
     <article class="admin-dashboard-product-card">
@@ -826,6 +830,7 @@ function adminDashboardProductWorkbenchTemplate(product) {
         <div class="admin-dashboard-product-badges">
           <span class="badge ${moderation.className}">${escapeHtml(moderation.label)}</span>
           <span class="badge ${product?.isSold ? 'badge-danger' : 'badge-ok'}">${product?.isSold ? 'Đã bán' : 'Đang bán'}</span>
+          ${reportCount > 0 ? `<span class="badge badge-warn">${escapeHtml(formatCount(reportCount))} báo cáo chờ xử lý</span>` : ''}
         </div>
       </div>
 
@@ -964,6 +969,7 @@ function adminProductCardTemplate(product, options = {}) {
   const canUnhide = canModerate && moderation.key === 'hidden';
   const categoryName = product?.category?.name || product?.categoryName || 'Danh mục chưa rõ';
   const sellerName = getUserLabel(product?.seller);
+  const reportCount = Number(product?.reportStats?.pending || 0);
 
   return `
     <article class="admin-record-card">
@@ -976,6 +982,7 @@ function adminProductCardTemplate(product, options = {}) {
         <div class="admin-badge-row">
           <span class="badge ${moderation.className}">${escapeHtml(moderation.label)}</span>
           <span class="badge ${product?.isSold ? 'badge-danger' : 'badge-ok'}">${product?.isSold ? 'Đã bán' : 'Đang bán'}</span>
+          ${reportCount > 0 ? `<span class="badge badge-warn">${escapeHtml(formatCount(reportCount))} báo cáo chờ xử lý</span>` : ''}
         </div>
       </div>
       <div class="admin-meta-row">
@@ -1009,6 +1016,60 @@ function adminProductCardTemplate(product, options = {}) {
           ${canModerate ? `<button type="button" class="btn btn-secondary" data-action="admin-post-delete" data-id="${escapeHtml(productId)}">Xóa tin</button>` : ''}
         </div>
       ` : ''}
+    </article>
+  `;
+}
+
+function adminReportCardTemplate(report) {
+  const reportId = getObjectId(report);
+  const productId = getObjectId(report?.product);
+  const productTitle = report?.product?.title || report?.productSnapshot?.title || 'Tin đăng không còn tồn tại';
+  const sellerName = getUserLabel(report?.seller || report?.product?.seller);
+  const reporterName = getUserLabel(report?.reporter);
+  const status = String(report?.status || 'pending');
+  const statusMeta = status === 'dismissed'
+    ? { label: 'Đã bỏ qua', className: 'badge-dark' }
+    : status === 'reviewed'
+      ? { label: 'Đã xem xét', className: 'badge-ok' }
+      : { label: 'Chờ xử lý', className: 'badge-warn' };
+
+  return `
+    <article class="admin-record-card">
+      <div class="admin-record-head">
+        <div class="admin-record-copy">
+          <span class="kicker">Báo cáo người dùng</span>
+          <h3>${escapeHtml(productTitle)}</h3>
+          <p class="admin-record-note">${escapeHtml(report?.reasonText || 'Không có mô tả chi tiết.')}</p>
+        </div>
+        <div class="admin-badge-row">
+          <span class="badge ${statusMeta.className}">${escapeHtml(statusMeta.label)}</span>
+          <span class="badge">${escapeHtml(formatReportReasonLabel(report?.reasonCode))}</span>
+        </div>
+      </div>
+      <div class="admin-meta-row">
+        <span class="meta-tag">Người báo cáo: ${escapeHtml(reporterName)}</span>
+        <span class="meta-tag">Người đăng: ${escapeHtml(sellerName)}</span>
+        <span class="meta-tag">Tạo lúc: ${escapeHtml(formatDateTime(report?.createdAt))}</span>
+      </div>
+      <div class="admin-kv-grid">
+        <div class="admin-kv-item">
+          <span>Trạng thái</span>
+          <strong>${escapeHtml(statusMeta.label)}</strong>
+        </div>
+        <div class="admin-kv-item">
+          <span>Người xử lý</span>
+          <strong>${escapeHtml(getUserLabel(report?.reviewedBy) || 'Chưa xử lý')}</strong>
+        </div>
+        <div class="admin-kv-item">
+          <span>Ghi chú admin</span>
+          <strong>${escapeHtml(report?.adminNote || 'Chưa có ghi chú')}</strong>
+        </div>
+      </div>
+      <div class="admin-record-actions">
+        ${productId ? `<a href="#/product/${escapeHtml(productId)}" class="header-link">Xem tin</a>` : '<span class="header-link">Tin đăng không còn khả dụng</span>'}
+        ${status === 'pending' ? `<button type="button" class="btn btn-primary" data-action="admin-report-review" data-id="${escapeHtml(reportId)}" data-status="reviewed">Đánh dấu đã xem xét</button>` : ''}
+        ${status === 'pending' ? `<button type="button" class="btn btn-secondary" data-action="admin-report-review" data-id="${escapeHtml(reportId)}" data-status="dismissed">Bỏ qua báo cáo</button>` : ''}
+      </div>
     </article>
   `;
 }
@@ -1149,5 +1210,29 @@ function renderAdminActivities() {
     adminActivitiesList.innerHTML = activities.length
       ? activities.map((activity) => adminActivityItemTemplate(activity)).join('')
       : buildStateCard('Chưa có nhật ký hoạt động', 'Mọi thao tác quản trị sẽ xuất hiện tại đây để tiện theo dõi và kiểm tra.', 'empty-state');
+  }
+}
+
+function renderAdminReports() {
+  const reports = state.admin.reports || [];
+  const pendingCount = reports.filter((report) => report?.status === 'pending').length;
+  const reviewedCount = reports.filter((report) => report?.status === 'reviewed').length;
+  const dismissedCount = reports.filter((report) => report?.status === 'dismissed').length;
+  const uniqueProducts = new Set(reports.map((report) => getObjectId(report?.product)).filter(Boolean)).size;
+
+  if (adminReportMetrics) {
+    adminReportMetrics.innerHTML = buildAdminMetricCards([
+      { label: 'Tổng báo cáo', value: reports.length, note: 'Các báo cáo người dùng đã gửi vào hệ thống' },
+      { label: 'Chờ xử lý', value: pendingCount, note: 'Cần kiểm tra và phản hồi sớm' },
+      { label: 'Đã xem xét', value: reviewedCount, note: 'Đã có người quản trị ghi nhận' },
+      { label: 'Đã bỏ qua', value: dismissedCount, note: 'Báo cáo không cần hành động thêm' },
+      { label: 'Tin bị báo cáo', value: uniqueProducts, note: 'Số tin đăng khác nhau có phát sinh báo cáo' }
+    ]);
+  }
+
+  if (adminReportsList) {
+    adminReportsList.innerHTML = reports.length
+      ? reports.map((report) => adminReportCardTemplate(report)).join('')
+      : buildStateCard('Chưa có báo cáo', 'Khi người dùng báo cáo tin đăng, khu vực này sẽ hiển thị để quản trị viên xử lý.', 'empty-state');
   }
 }

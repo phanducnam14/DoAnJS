@@ -169,3 +169,216 @@
   flex-shrink: 0;
 }
 
+.product-report-complete {
+  background: var(--bg-subtle);
+  border-color: var(--line);
+  color: var(--ink-muted);
+}
+
+body.report-modal-open {
+  overflow: hidden;
+}
+
+.report-modal-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-5);
+}
+
+.report-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-dark);
+  opacity: 0.56;
+  backdrop-filter: blur(10px);
+}
+
+.report-modal-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 680px);
+  animation: report-modal-enter var(--dur-slow) var(--ease-out);
+}
+
+.report-modal-panel {
+  display: grid;
+  gap: var(--sp-5);
+  padding: var(--sp-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--bg-paper);
+  box-shadow: var(--shadow-xl);
+}
+
+.report-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.report-modal-head h3,
+.report-modal-success-copy h4 {
+  margin: 0;
+  color: var(--ink);
+}
+
+.report-modal-head p,
+.report-modal-success-copy p {
+  margin: 0;
+}
+
+.report-modal-close {
+  flex-shrink: 0;
+}
+
+.report-modal-form,
+.report-modal-success {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+.report-modal-product-card {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-subtle);
+}
+
+.report-modal-product-card strong {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.report-modal-product-card p,
+.report-modal-product-card .comparison-label {
+  margin: 0;
+}
+
+.report-reason-grid {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.report-reason-option {
+  position: relative;
+  display: block;
+}
+
+.report-reason-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.report-reason-option-body {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-subtle);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  transition: border-color var(--dur-std) var(--ease-out), background var(--dur-std) var(--ease-out), box-shadow var(--dur-std) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.report-reason-option:hover .report-reason-option-body {
+  border-color: var(--line-strong);
+  background: var(--bg-paper);
+}
+
+.report-reason-option input:checked + .report-reason-option-body {
+  border-color: var(--ink);
+  background: var(--bg-paper);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+  color: var(--ink);
+}
+
+.report-reason-option input:focus-visible + .report-reason-option-body {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.report-modal-actions {
+  justify-content: flex-end;
+}
+
+.report-modal-actions .btn {
+  flex: 1 1 180px;
+}
+
+.report-modal-success {
+  align-items: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.report-modal-success-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--ink-invert);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.report-modal-success-copy {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+@keyframes report-modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 639px) {
+  .report-modal-shell {
+    padding: var(--sp-4);
+    align-items: end;
+  }
+
+  .report-modal-dialog {
+    width: 100%;
+  }
+
+  .report-modal-panel {
+    padding: var(--sp-5);
+    border-radius: var(--r-lg);
+  }
+
+  .report-modal-head {
+    display: grid;
+  }
+
+  .report-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .report-modal-actions .btn {
+    width: 100%;
+  }
+}
+

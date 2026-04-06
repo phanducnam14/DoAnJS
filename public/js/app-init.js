@@ -36,7 +36,14 @@ headerPanelToggles.forEach((toggle) => {
 });
 
 document.addEventListener('keydown', (event) => {
-  if (event.key !== 'Escape' || !state.activeHeaderPanel) return;
+  if (event.key !== 'Escape') return;
+
+  if (state.productReport.open) {
+    closeProductReportModal();
+    return;
+  }
+
+  if (!state.activeHeaderPanel) return;
 
   const activeToggle = Array.from(headerPanelToggles).find((toggle) => toggle.dataset.panelToggle === state.activeHeaderPanel);
   closeHeaderPanels();
@@ -108,6 +115,11 @@ document.addEventListener('click', async (event) => {
   const { action, id } = actionTarget.dataset;
 
   try {
+    if (action === 'close-report-modal') {
+      closeProductReportModal();
+      return;
+    }
+
     if (action === 'clear-filter') {
       clearFilterValue(actionTarget.dataset.key);
       state.pagination.page = 1;
@@ -180,6 +192,13 @@ document.addEventListener('click', async (event) => {
     if (action === 'favorite') {
       await toggleFavorite(id);
     }
+    if (action === 'report') {
+      openProductReportModal({
+        productId: id,
+        productTitle: actionTarget.dataset.productTitle || ''
+      });
+      return;
+    }
     if (action === 'boost') {
       await boostProduct(id);
     }
@@ -236,6 +255,13 @@ document.addEventListener('click', async (event) => {
     if (action === 'admin-post-delete') {
       if (!window.confirm('Xóa tin đăng này khỏi hệ thống?')) return;
       await deleteAdminProduct(id);
+    }
+    if (action === 'admin-report-review') {
+      const nextStatus = actionTarget.dataset.status || 'reviewed';
+      const adminNote = window.prompt(nextStatus === 'dismissed' ? 'Ghi chú khi bỏ qua báo cáo này:' : 'Ghi chú xử lý báo cáo này (có thể để trống):', '');
+      if (adminNote === null) return;
+      if (nextStatus === 'dismissed' && !window.confirm('Đánh dấu báo cáo này là không cần xử lý thêm?')) return;
+      await reviewAdminReport(id, nextStatus, adminNote.trim());
     }
   } catch (error) {
     setBanner(globalMessage, error.message, 'error');
@@ -396,6 +422,10 @@ refreshAdminProductsBtn?.addEventListener('click', () => {
   loadAdminProducts().catch((error) => setBanner(globalMessage, error.message, 'error'));
 });
 
+refreshAdminReportsBtn?.addEventListener('click', () => {
+  loadAdminReports().catch((error) => setBanner(globalMessage, error.message, 'error'));
+});
+
 refreshAdminActivitiesBtn?.addEventListener('click', () => {
   loadAdminActivities().catch((error) => setBanner(globalMessage, error.message, 'error'));
 });
@@ -465,6 +495,57 @@ productDetail.addEventListener('submit', async (event) => {
     setBanner(globalMessage, response.message || 'Đã cập nhật ảnh cho tin đăng.');
   } catch (error) {
     setBanner(globalMessage, error.message, 'error');
+  }
+});
+
+productReportForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  if (state.productReport.submitting) return;
+
+  const productId = state.productReport.productId;
+  if (!productId) {
+    setInlineBox(productReportFeedback, 'Không xác định được tin đăng cần báo cáo.', 'error');
+    return;
+  }
+
+  const formData = new FormData(productReportForm);
+  const reasonCode = String(formData.get('reasonCode') || '').trim();
+  const reasonText = String(formData.get('reasonText') || '').trim();
+  const selectedReason = REPORT_REASON_OPTIONS.find((item) => item.code === reasonCode);
+
+  if (!selectedReason) {
+    setInlineBox(productReportFeedback, 'Vui lòng chọn một lý do báo cáo hợp lệ.', 'error');
+    return;
+  }
+
+  if (!reasonText) {
+    setInlineBox(productReportFeedback, 'Vui lòng bổ sung mô tả chi tiết trước khi gửi báo cáo.', 'error');
+    productReportReasonText?.focus();
+    return;
+  }
+
+  if (reasonText.length > 500) {
+    setInlineBox(productReportFeedback, 'Mô tả báo cáo tối đa 500 ký tự.', 'error');
+    productReportReasonText?.focus();
+    return;
+  }
+
+  clearInlineBox(productReportFeedback);
+  state.productReport.submitting = true;
+  renderProductReportModal();
+
+  try {
+    await submitProductReport(productId, reasonText, selectedReason.code);
+    markProductReportSubmitted(productId);
+    state.productReport.submitting = false;
+    state.productReport.success = true;
+    renderProductReportModal();
+    focusProductReportModal();
+  } catch (error) {
+    state.productReport.submitting = false;
+    renderProductReportModal();
+    setInlineBox(productReportFeedback, error.message, 'error');
   }
 });
 
@@ -570,6 +651,7 @@ sessionRegisterBtn?.addEventListener('click', () => {
 });
 
 window.addEventListener('hashchange', () => {
+  closeProductReportModal({ force: true });
   renderRoute();
 });
 

@@ -53,6 +53,16 @@ async function loadAdminDashboard() {
   renderAdminDashboard();
 }
 
+async function submitProductReport(productId, reasonText, reasonCode = 'other') {
+  await apiFetch(`/api/products/${productId}/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reasonText, reasonCode })
+  });
+
+  setBanner(globalMessage, 'Báo cáo đã được gửi để quản trị viên xem xét.');
+}
+
 async function loadNotifications({ silent = false, skipMarkRead = false } = {}) {
   if (!isAuthenticated()) {
     state.notifications = [];
@@ -144,6 +154,21 @@ async function loadAdminProducts() {
   renderAdminProducts();
 }
 
+async function loadAdminReports() {
+  if (!isAdminUser()) return;
+
+  if (adminReportMetrics) {
+    adminReportMetrics.innerHTML = buildStateCard('Đang tải chỉ số báo cáo', 'Hệ thống đang tổng hợp danh sách báo cáo từ người dùng.', 'loading-state');
+  }
+  if (adminReportsList) {
+    adminReportsList.innerHTML = buildStateCard('Đang tải báo cáo', 'Hệ thống đang lấy các báo cáo mới nhất để bạn xử lý.', 'loading-state');
+  }
+
+  const response = await apiFetch('/api/admin/reports');
+  state.admin.reports = extractAdminList(response.data, ['reports', 'items', 'results', 'data']);
+  renderAdminReports();
+}
+
 async function loadAdminActivities() {
   if (!isAdminUser()) return;
 
@@ -171,10 +196,26 @@ async function refreshAdminAfterProductChange() {
   await Promise.all([
     loadAdminDashboard().catch(() => null),
     loadAdminProducts().catch(() => null),
+    loadAdminReports().catch(() => null),
     loadAdminActivities().catch(() => null),
     loadProducts().catch(() => null),
     loadDashboardProducts().catch(() => null),
     loadFavorites().catch(() => null)
+  ]);
+}
+
+async function reviewAdminReport(reportId, status, adminNote = '') {
+  await apiFetch(`/api/admin/reports/${reportId}/review`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, adminNote })
+  });
+
+  setBanner(globalMessage, status === 'dismissed' ? 'Báo cáo đã được đóng và đánh dấu bỏ qua.' : 'Báo cáo đã được ghi nhận là đã xem xét.');
+  await Promise.all([
+    loadAdminReports().catch(() => null),
+    loadAdminActivities().catch(() => null),
+    loadAdminDashboard().catch(() => null)
   ]);
 }
 
@@ -256,7 +297,7 @@ function normalizeRoute() {
     return { name: 'auth' };
   }
 
-  const allowedRoutes = ['dashboard', 'products', 'messages', 'favorites', 'profile', 'manage-posts', 'settings', 'sell', 'admin-dashboard', 'admin-users', 'admin-posts', 'admin-activities'];
+  const allowedRoutes = ['dashboard', 'products', 'messages', 'favorites', 'profile', 'manage-posts', 'settings', 'sell', 'admin-dashboard', 'admin-users', 'admin-posts', 'admin-reports', 'admin-activities'];
   return { name: allowedRoutes.includes(cleanHash) ? cleanHash : 'dashboard' };
 }
 
@@ -298,6 +339,7 @@ async function renderRoute() {
     'admin-dashboard': 'Bảng điều phối nội bộ',
     'admin-users': 'Kiểm soát tài khoản',
     'admin-posts': 'Duyệt nội dung hệ thống',
+    'admin-reports': 'Tiếp nhận báo cáo người dùng',
     'admin-activities': 'Truy vết thao tác nội bộ'
   };
   const titleMap = {
@@ -313,6 +355,7 @@ async function renderRoute() {
     'admin-dashboard': 'Tổng quan quản trị',
     'admin-users': 'Quản lý người dùng',
     'admin-posts': 'Kiểm duyệt tin đăng',
+    'admin-reports': 'Xử lý báo cáo',
     'admin-activities': 'Nhật ký quản trị'
   };
 
@@ -384,6 +427,9 @@ async function renderRoute() {
     }
     if (route.name === 'admin-posts') {
       await loadAdminProducts();
+    }
+    if (route.name === 'admin-reports') {
+      await loadAdminReports();
     }
     if (route.name === 'admin-activities') {
       await loadAdminActivities();
