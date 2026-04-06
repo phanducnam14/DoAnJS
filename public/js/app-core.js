@@ -17,6 +17,7 @@ const registerForm = document.getElementById('registerForm');
 const forgotPasswordForm = document.getElementById('forgotPasswordForm');
 const mainMenuLinks = document.querySelectorAll('#mainMenu a');
 const adminOnlyElements = document.querySelectorAll('[data-admin-only]');
+const userOnlyElements = document.querySelectorAll('[data-user-only]');
 const pages = document.querySelectorAll('.page');
 const pageKicker = document.getElementById('pageKicker');
 const pageTitle = document.getElementById('pageTitle');
@@ -32,6 +33,8 @@ const sessionEntryAvatar = document.getElementById('sessionEntryAvatar');
 const sessionEntryLabel = document.getElementById('sessionEntryLabel');
 const sessionEntrySubtext = document.getElementById('sessionEntrySubtext');
 const sessionPanelAvatar = document.getElementById('sessionPanelAvatar');
+const brandHomeLink = document.getElementById('brandHomeLink');
+const headerBarAdminLink = document.getElementById('headerBarAdminLink');
 const marketHeader = document.querySelector('.market-header');
 const marketHeaderShell = document.querySelector('.market-header-shell');
 const headerPanelToggles = document.querySelectorAll('[data-panel-toggle]');
@@ -418,11 +421,45 @@ function isAdminRoute(name) {
   return ['admin-dashboard', 'admin-users', 'admin-posts', 'admin-reports', 'admin-activities'].includes(name);
 }
 
+function isAdminRestrictedRoute(name) {
+  return ['dashboard', 'products', 'messages', 'favorites', 'profile', 'manage-posts', 'settings', 'sell'].includes(name);
+}
+
+function getDefaultAppRoute(user = state.currentUser) {
+  return isAdminUser(user) ? 'admin-dashboard' : 'dashboard';
+}
+
+function getRouteHash(name = getDefaultAppRoute()) {
+  return `#/${name}`;
+}
+
 function updateAdminNavigation() {
   const visible = isAdminUser();
   adminOnlyElements.forEach((element) => {
     element.classList.toggle('hidden', !visible);
   });
+
+  userOnlyElements.forEach((element) => {
+    element.classList.toggle('hidden', visible);
+  });
+
+  if (brandHomeLink) {
+    brandHomeLink.setAttribute('href', getRouteHash());
+  }
+
+  if (headerBarAdminLink) {
+    headerBarAdminLink.setAttribute('href', getRouteHash('admin-dashboard'));
+  }
+
+  if (sessionProfileLink) {
+    sessionProfileLink.setAttribute('href', visible ? '#/admin-dashboard' : '#/profile');
+    sessionProfileLink.textContent = visible ? 'Tổng quan quản trị' : 'Hồ sơ';
+  }
+
+  if (sessionFavoritesLink) {
+    sessionFavoritesLink.setAttribute('href', visible ? '#/admin-users' : '#/favorites');
+    sessionFavoritesLink.textContent = visible ? 'Quản lý người dùng' : 'Yêu thích';
+  }
 }
 
 function formatRoleLabel(value) {
@@ -1616,7 +1653,7 @@ function renderNotificationsPanel() {
   }
 
   notificationsPanelList.innerHTML = state.notifications.map((notification) => {
-    const href = notification.relatedId ? `#/product/${notification.relatedId}` : '#/dashboard';
+    const href = notification.relatedId ? `#/product/${notification.relatedId}` : getRouteHash();
     return `
       <a href="${href}" class="notification-entry ${notification.isRead ? '' : 'is-unread'}" data-notification-id="${escapeHtml(notification._id)}">
         <div class="notification-entry-copy">
@@ -1630,9 +1667,11 @@ function renderNotificationsPanel() {
 }
 
 function updateUnreadBadge() {
-  const totalUnread = typeof state.unreadMeta.messageCount === 'number'
-    ? state.unreadMeta.messageCount
-    : state.conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+  const totalUnread = isAdminUser()
+    ? 0
+    : (typeof state.unreadMeta.messageCount === 'number'
+      ? state.unreadMeta.messageCount
+      : state.conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0));
   const notificationUnread = typeof state.unreadMeta.notificationCount === 'number'
     ? state.unreadMeta.notificationCount
     : state.notifications.filter((notification) => !notification.isRead).length;
