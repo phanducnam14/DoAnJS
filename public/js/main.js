@@ -72,9 +72,13 @@ const refreshConversationsBtn = document.getElementById('refreshConversationsBtn
 const paginationInfo = document.getElementById('paginationInfo');
 const productsSummary = document.getElementById('productsSummary');
 const productsActiveFilters = document.getElementById('productsActiveFilters');
+const compareModeSummary = document.getElementById('compareModeSummary');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+const toggleCompareModeBtn = document.getElementById('toggleCompareModeBtn');
+const openManualCompareBtn = document.getElementById('openManualCompareBtn');
 const prevPageBtn = document.getElementById('prevPageBtn');
 const nextPageBtn = document.getElementById('nextPageBtn');
+const manualComparePanel = document.getElementById('manualComparePanel');
 const myPostsActiveCount = document.getElementById('myPostsActiveCount');
 const myPostsSoldCount = document.getElementById('myPostsSoldCount');
 const refreshAdminDashboardBtn = document.getElementById('refreshAdminDashboardBtn');
@@ -152,11 +156,18 @@ const state = {
   messagePollTimer: null,
   products: [],
   featuredProducts: [],
-   productComparison: {
+  productComparison: {
     productId: '',
     peers: [],
     criteria: null,
     error: ''
+  },
+  manualComparison: {
+    active: false,
+    categoryId: '',
+    selectedProductIds: [],
+    selectedProducts: [],
+    comparedProductIds: []
   },
   pagination: {
     page: 1,
@@ -1078,8 +1089,11 @@ function productCardTemplate(product, options = {}) {
     allowMarkSold = false,
     markSoldLabel = 'Đánh dấu đã bán',
     showModerationInfo = false,
-    compactManageActions = false
+    compactManageActions = false,
+    manualCompareMode = false,
+    manualCompareSelected = false
   } = options;
+  const productId = getObjectId(product);
   const imageUrl = getProductImageUrl(product);
   const sellerName = product.seller?.name || 'Người bán đã xác minh';
   const postedTime = formatRelativeTime(product.createdAt);
@@ -1089,6 +1103,12 @@ function productCardTemplate(product, options = {}) {
   const canFavoriteNow = allowFavorite && canFavoriteProduct(product);
   const canMessageNow = canMessageProductSeller(product);
   const canBoostNow = allowBoost && canBoostProduct(product);
+  const compareToggle = manualCompareMode ? `
+    <label class="product-compare-toggle ${manualCompareSelected ? 'is-selected' : ''}">
+      <input type="checkbox" data-action="toggle-manual-compare" data-id="${productId}" ${manualCompareSelected ? 'checked' : ''} />
+      <span>${manualCompareSelected ? 'Đã chọn để so sánh' : 'Chọn để so sánh'}</span>
+    </label>
+  ` : '';
   const secondaryActions = [
     canMessageNow ? `<button type="button" class="btn btn-secondary" data-action="start-conversation" data-id="${product._id}">${buildButtonLabel('message', 'Nhắn tin')}</button>` : '',
     canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">${buildButtonLabel('heart', 'Lưu tin')}</button>` : '',
@@ -1098,7 +1118,7 @@ function productCardTemplate(product, options = {}) {
   ].filter(Boolean).join('');
 
   return `
-    <article class="product-card">
+    <article class="product-card${manualCompareSelected ? ' is-compare-selected' : ''}">
       <div class="product-cover">
         ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(product.title)}" />` : '<div class="product-cover-fallback"><strong>Không có ảnh</strong><p>Người bán chưa cập nhật hình minh họa.</p></div>'}
         <div class="product-badges">
@@ -1129,6 +1149,7 @@ function productCardTemplate(product, options = {}) {
         ${showModerationInfo && moderation.reason ? `<p class="admin-record-note">Lý do kiểm duyệt: ${escapeHtml(moderation.reason)}</p>` : ''}
       </div>
       <div class="product-actions">
+        ${compareToggle}
         <button type="button" class="btn btn-primary product-primary-action" data-action="detail" data-id="${product._id}">${buildButtonLabel('eye', compactManageActions ? 'Chi tiết' : 'Xem chi tiết')}</button>
         ${secondaryActions ? `<div class="product-quick-actions">${secondaryActions}</div>` : ''}
       </div>
@@ -1137,13 +1158,21 @@ function productCardTemplate(product, options = {}) {
 }
 
 function renderProducts(products) {
+  const manualCompareMode = state.manualComparison.active && Boolean(getManualCompareCategoryId());
+  const selectedIds = new Set(state.manualComparison.selectedProductIds);
+
   if (!products.length) {
     updateProductsSummary('Không tìm thấy kết quả phù hợp với bộ lọc hiện tại.');
     productsList.innerHTML = buildStateCard('Không tìm thấy sản phẩm phù hợp', 'Hãy thử đổi từ khóa tìm kiếm hoặc bộ lọc để xem thêm kết quả khác.', 'empty-state');
+    renderManualComparisonUI();
     return;
   }
 
-  productsList.innerHTML = products.map((product) => productCardTemplate(product)).join('');
+  productsList.innerHTML = products.map((product) => productCardTemplate(product, {
+    manualCompareMode,
+    manualCompareSelected: selectedIds.has(getObjectId(product))
+  })).join('');
+  renderManualComparisonUI();
 }
 
 function renderFavorites(items) {
@@ -1603,6 +1632,203 @@ function buildComparisonBadges(item) {
   return badges.join('');
 }
 
+function getManualCompareCategoryId() {
+  return state.filters.category || '';
+}
+
+function resetManualComparison({ keepMode = state.manualComparison.active } = {}) {
+  state.manualComparison.active = keepMode;
+  state.manualComparison.categoryId = keepMode ? getManualCompareCategoryId() : '';
+  state.manualComparison.selectedProductIds = [];
+  state.manualComparison.selectedProducts = [];
+  state.manualComparison.comparedProductIds = [];
+}
+
+function syncManualComparisonState() {
+  if (!state.manualComparison.active) {
+    resetManualComparison({ keepMode: false });
+    return;
+  }
+
+  const categoryId = getManualCompareCategoryId();
+  if (!categoryId) {
+    state.manualComparison.categoryId = '';
+    state.manualComparison.selectedProductIds = [];
+    state.manualComparison.selectedProducts = [];
+    state.manualComparison.comparedProductIds = [];
+    return;
+  }
+
+  if (state.manualComparison.categoryId !== categoryId) {
+    state.manualComparison.categoryId = categoryId;
+    state.manualComparison.selectedProductIds = [];
+    state.manualComparison.selectedProducts = [];
+    state.manualComparison.comparedProductIds = [];
+    return;
+  }
+
+  if (state.manualComparison.comparedProductIds.length) {
+    const selectedIds = new Set(state.manualComparison.selectedProductIds);
+    state.manualComparison.comparedProductIds = state.manualComparison.comparedProductIds.filter((id) => selectedIds.has(id));
+
+    if (state.manualComparison.comparedProductIds.length < 2) {
+      state.manualComparison.comparedProductIds = [];
+    } else {
+      state.manualComparison.comparedProductIds = state.manualComparison.selectedProductIds.slice();
+    }
+  }
+}
+
+function getManualCompareProducts(ids = state.manualComparison.selectedProductIds) {
+  const productsById = new Map([
+    ...state.manualComparison.selectedProducts.map((product) => [getObjectId(product), product]),
+    ...state.products.map((product) => [getObjectId(product), product])
+  ]);
+  return ids.map((id) => productsById.get(id)).filter(Boolean);
+}
+
+function renderManualComparisonPanel() {
+  if (!manualComparePanel) return;
+
+  const compareProducts = getManualCompareProducts(state.manualComparison.comparedProductIds);
+  if (compareProducts.length < 2) {
+    manualComparePanel.hidden = true;
+    manualComparePanel.innerHTML = '';
+    return;
+  }
+
+  const categoryName = getCategoryNameById(getManualCompareCategoryId());
+  const filteredCount = formatCount(state.pagination.total || state.products.length);
+  const visibleCount = formatCount(state.products.length);
+
+  manualComparePanel.hidden = false;
+  manualComparePanel.innerHTML = `
+    <div class="section-head section-head-wrap compact-head">
+      <div>
+        <p class="kicker">So sánh thủ công</p>
+        <h3>${escapeHtml(categoryName)}</h3>
+        <p class="section-helper">Đối chiếu nhanh ${escapeHtml(formatCount(compareProducts.length))} sản phẩm đã chọn từ danh sách đang lọc.</p>
+      </div>
+    </div>
+    <div class="comparison-current-card">
+      <div>
+        <span class="comparison-label">Danh sách đang lọc</span>
+        <strong>${escapeHtml(categoryName)}</strong>
+      </div>
+      <div class="comparison-current-meta">
+        <span class="meta-tag">${escapeHtml(filteredCount)} sản phẩm phù hợp</span>
+        <span class="meta-tag">${escapeHtml(visibleCount)} đang hiển thị trên trang</span>
+        <span class="meta-tag">${escapeHtml(formatCount(compareProducts.length))} đã chọn để so sánh</span>
+      </div>
+    </div>
+    <div class="comparison-grid">
+      ${compareProducts.map((product) => `
+        <article class="comparison-card">
+          <div class="comparison-card-head">
+            <div>
+              <span class="comparison-label">${escapeHtml(product.category?.name || categoryName)}</span>
+              <h4>${escapeHtml(product.title)}</h4>
+            </div>
+            <strong class="price">${formatCurrency(product.price)}</strong>
+          </div>
+          <div class="comparison-meta-row">
+            <span class="meta-tag soft">${escapeHtml(formatCondition(product.condition))}</span>
+            <span class="meta-tag soft">${escapeHtml(formatLocation(product.location))}</span>
+            <span class="meta-tag soft">${escapeHtml(formatRelativeTime(product.createdAt))}</span>
+          </div>
+          <div class="profile-data compact-data comparison-data">
+            <div class="profile-row"><strong>Người đăng</strong><span>${escapeHtml(product.seller?.name || 'Người bán đã xác minh')}</span></div>
+            <div class="profile-row"><strong>Tình trạng</strong><span>${escapeHtml(formatCondition(product.condition))}</span></div>
+            <div class="profile-row"><strong>Khu vực</strong><span>${escapeHtml(formatLocation(product.location))}</span></div>
+            <div class="profile-row"><strong>Lượt xem</strong><span>${escapeHtml(formatCount(product.views || 0))}</span></div>
+            <div class="profile-row"><strong>Lượt lưu</strong><span>${escapeHtml(formatCount(product.favoritesCount || 0))}</span></div>
+          </div>
+          <p class="product-snippet">${escapeHtml(truncateText(product.description || 'Không có mô tả chi tiết.', 150))}</p>
+          <div class="comparison-card-actions">
+            <button type="button" class="btn btn-primary" data-action="detail" data-id="${escapeHtml(getObjectId(product))}">Xem chi tiết</button>
+          </div>
+        </article>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderManualComparisonUI() {
+  if (!toggleCompareModeBtn || !openManualCompareBtn || !compareModeSummary) return;
+
+  const active = state.manualComparison.active;
+  const categoryId = getManualCompareCategoryId();
+  const hasCategory = Boolean(categoryId);
+  const selectedCount = state.manualComparison.selectedProductIds.length;
+  const compareReady = active && hasCategory && selectedCount >= 2;
+  const filteredCount = formatCount(state.pagination.total || state.products.length);
+  const visibleCount = formatCount(state.products.length);
+
+  toggleCompareModeBtn.textContent = active ? 'Thoát chế độ so sánh' : 'Bật chế độ so sánh';
+  openManualCompareBtn.disabled = !compareReady;
+  openManualCompareBtn.textContent = compareReady
+    ? `So sánh ${formatCount(selectedCount)} sản phẩm`
+    : 'Chọn ít nhất 2 sản phẩm';
+
+  if (!active) {
+    compareModeSummary.textContent = 'Bật chế độ so sánh để chọn sản phẩm trực tiếp từ danh sách đang lọc.';
+  } else if (!hasCategory) {
+    compareModeSummary.textContent = 'Chế độ so sánh đang bật. Hãy áp dụng bộ lọc danh mục để chỉ giữ lại các sản phẩm cùng nhóm trước khi chọn.';
+  } else if (!state.products.length) {
+    compareModeSummary.textContent = `Danh mục ${getCategoryNameById(categoryId)} hiện chưa có sản phẩm phù hợp với bộ lọc đang áp dụng.`;
+  } else {
+    compareModeSummary.textContent = `${getCategoryNameById(categoryId)} có ${filteredCount} sản phẩm phù hợp, đang hiển thị ${visibleCount} sản phẩm trên trang này và bạn đã chọn ${formatCount(selectedCount)} sản phẩm.`;
+  }
+
+  renderManualComparisonPanel();
+}
+
+function toggleManualComparisonMode() {
+  resetManualComparison({ keepMode: !state.manualComparison.active });
+  renderProducts(state.products);
+}
+
+function toggleManualComparisonSelection(productId) {
+  if (!state.manualComparison.active || !getManualCompareCategoryId()) return;
+
+  const targetId = String(productId || '');
+  if (!targetId) return;
+
+  const selectedIds = new Set(state.manualComparison.selectedProductIds);
+  if (selectedIds.has(targetId)) {
+    selectedIds.delete(targetId);
+    state.manualComparison.selectedProducts = state.manualComparison.selectedProducts.filter((product) => getObjectId(product) !== targetId);
+  } else {
+    selectedIds.add(targetId);
+    const product = state.products.find((item) => getObjectId(item) === targetId);
+    if (product) {
+      state.manualComparison.selectedProducts = [
+        ...state.manualComparison.selectedProducts.filter((item) => getObjectId(item) !== targetId),
+        product
+      ];
+    }
+  }
+
+  state.manualComparison.selectedProductIds = Array.from(selectedIds);
+
+  if (state.manualComparison.comparedProductIds.length) {
+    state.manualComparison.comparedProductIds = state.manualComparison.selectedProductIds.length >= 2
+      ? state.manualComparison.selectedProductIds.slice()
+      : [];
+  }
+
+  renderProducts(state.products);
+}
+
+function openManualComparisonPanel() {
+  if (!state.manualComparison.active || !getManualCompareCategoryId()) return;
+  if (state.manualComparison.selectedProductIds.length < 2) return;
+
+  state.manualComparison.comparedProductIds = state.manualComparison.selectedProductIds.slice();
+  renderManualComparisonUI();
+  manualComparePanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function renderProductComparison(currentProduct) {
   const compareState = state.productComparison;
   const compareItems = Array.isArray(compareState.peers) ? compareState.peers : [];
@@ -1728,6 +1954,7 @@ async function loadProducts({ silent = false } = {}) {
   const response = await apiFetch(`/api/products?${params.toString()}`);
   state.products = response.data?.products || [];
   state.pagination = response.data?.pagination || state.pagination;
+  syncManualComparisonState();
 
   renderProducts(state.products);
   renderHomeStats();
@@ -2794,6 +3021,12 @@ categoryChips.addEventListener('click', (event) => {
   state.pagination.page = 1;
   syncFiltersToForm();
   renderCategoryChips();
+
+  if (normalizeRoute().name === 'products') {
+    loadProducts().catch((error) => setBanner(globalMessage, error.message, 'error'));
+    return;
+  }
+
   window.location.hash = '#/products';
 });
 
@@ -2837,6 +3070,10 @@ document.addEventListener('click', async (event) => {
         state.pendingRouteMessage = 'Kéo xuống phần so sánh để xem nhanh các sản phẩm cùng danh mục.';
         window.location.hash = `#/product/${id}`;
       }
+    }
+
+    if (action === 'toggle-manual-compare') {
+      toggleManualComparisonSelection(id);
     }
     
     if (action === 'edit-images') {
@@ -3058,6 +3295,14 @@ clearFiltersBtn.addEventListener('click', async () => {
   } catch (error) {
     setBanner(globalMessage, error.message, 'error');
   }
+});
+
+toggleCompareModeBtn?.addEventListener('click', () => {
+  toggleManualComparisonMode();
+});
+
+openManualCompareBtn?.addEventListener('click', () => {
+  openManualComparisonPanel();
 });
 
 refreshProductsBtn.addEventListener('click', () => {

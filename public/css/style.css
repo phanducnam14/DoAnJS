@@ -392,7 +392,8 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   line-height: 1.5;
 }
 
-.comparison-panel {
+.comparison-panel,
+.manual-compare-panel {
   margin-top: var(--sp-6);
 }
 
@@ -1569,6 +1570,11 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   border-color: var(--line-mid);
 }
 
+.product-card.is-compare-selected {
+  border-color: var(--ink);
+  box-shadow: var(--shadow-md);
+}
+
 .product-cover {
   position: relative;
   aspect-ratio: 4 / 3;
@@ -1688,6 +1694,35 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   gap: var(--sp-3);
   padding: 0 var(--sp-5) var(--sp-5);
 }
+
+.product-compare-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: calc(var(--sp-5) + var(--sp-6));
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.product-compare-toggle input[type="checkbox"] {
+  width: var(--sp-4);
+  height: var(--sp-4);
+  min-height: 0;
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+
+.product-compare-toggle.is-selected {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--ink-invert);
+}
 .product-primary-action {
   width: 100%;
 }
@@ -1791,6 +1826,35 @@ input[type="file"]:hover { border-color: var(--line-strong); background: var(--b
   background: var(--bg-paper);
   border: 1px solid var(--line);
   border-radius: var(--r-xl);
+}
+
+.compare-toolbar {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  margin-top: var(--sp-4);
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.compare-toolbar-copy {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.compare-toolbar-title {
+  margin: 0;
+}
+
+.compare-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.compare-toolbar-actions .btn {
+  flex: 1 1 auto;
 }
 
 .active-filter-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }

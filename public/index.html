@@ -449,9 +449,21 @@
               </div>
               <div id="productsActiveFilters" class="active-filter-row" aria-live="polite"></div>
               <div id="productsSummary" class="list-summary" aria-live="polite">Đang sẵn sàng hiển thị kết quả.</div>
+              <section class="compare-toolbar" aria-live="polite">
+                <div class="compare-toolbar-copy">
+                  <p class="kicker">So sánh thủ công</p>
+                  <h4 class="compare-toolbar-title t-h3">Chọn ít nhất 2 sản phẩm trong cùng danh mục</h4>
+                  <p id="compareModeSummary" class="section-helper">Bật chế độ so sánh để chọn sản phẩm trực tiếp từ danh sách đang lọc.</p>
+                </div>
+                <div class="compare-toolbar-actions">
+                  <button id="toggleCompareModeBtn" type="button" class="btn btn-secondary btn-sm">Bật chế độ so sánh</button>
+                  <button id="openManualCompareBtn" type="button" class="btn btn-primary btn-sm" disabled>Chọn ít nhất 2 sản phẩm</button>
+                </div>
+              </section>
             </section>
 
             <div id="productsList" class="product-grid"></div>
+            <section id="manualComparePanel" class="detail-info-card manual-compare-panel" hidden></section>
 
             <section class="pagination-shell">
               <div id="paginationInfo" class="pagination-info">Trang 1 / 1</div>
