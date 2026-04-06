@@ -2,6 +2,7 @@ const User = require('../schemas/User');
 const Role = require('../schemas/Role');
 const Product = require('../schemas/Product');
 const AdminActivity = require('../schemas/AdminActivity');
+const Notification = require('../schemas/Notification');
 const { sanitizeUser, pickAllowedFields } = require('../utils/response');
 const mongoose = require('mongoose');
 
@@ -296,6 +297,16 @@ exports.approveProduct = async (req, res) => {
       title: product.title,
       status: product.status
     });
+
+    if (product.seller?._id || product.seller) {
+      await Notification.create({
+        user: product.seller?._id || product.seller,
+        type: 'product',
+        title: 'Bài đăng đã được duyệt',
+        message: `Tin đăng "${product.title}" của bạn đã được duyệt và đang hiển thị trên hệ thống.`,
+        relatedId: product._id
+      });
+    }
 
     res.json({ success: true, data: product });
   } catch (err) {

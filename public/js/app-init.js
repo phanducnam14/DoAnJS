@@ -26,8 +26,12 @@ globalSearchForm.addEventListener('submit', async (event) => {
 });
 
 headerPanelToggles.forEach((toggle) => {
-  toggle.addEventListener('click', () => {
+  toggle.addEventListener('click', async () => {
     toggleHeaderPanel(toggle.dataset.panelToggle);
+
+    if (toggle.dataset.panelToggle === 'notifications' && state.activeHeaderPanel === 'notifications') {
+      await loadNotifications({ skipMarkRead: false }).catch((error) => setBanner(globalMessage, error.message, 'error'));
+    }
   });
 });
 
@@ -71,6 +75,26 @@ document.addEventListener('click', (event) => {
 });
 
 marketHeaderShell?.addEventListener('click', (event) => {
+  const notificationEntry = event.target.closest('[data-notification-id]');
+  if (notificationEntry) {
+    const notificationId = notificationEntry.dataset.notificationId;
+    if (notificationId) {
+      apiFetch(`/api/users/notifications/${notificationId}/read`, { method: 'PUT' }).catch(() => null);
+      state.notifications = state.notifications.map((notification) => (
+        notification._id === notificationId ? { ...notification, isRead: true } : notification
+      ));
+      if (state.unreadMeta.notificationCount > 0) {
+        state.unreadMeta = {
+          ...state.unreadMeta,
+          unreadCount: Math.max(0, (state.unreadMeta.unreadCount || 0) - 1),
+          notificationCount: Math.max(0, state.unreadMeta.notificationCount - 1)
+        };
+      }
+      renderNotificationsPanel();
+      updateUnreadBadge();
+    }
+  }
+
   const routeLink = event.target.closest('a[href^="#/"]');
   if (routeLink) {
     closeHeaderPanels();
@@ -236,9 +260,19 @@ loginForm.addEventListener('submit', async (event) => {
     clearBanner(authMessage);
     loginForm.reset();
     showAppShell();
-    await Promise.all([loadMetadata(), loadDashboardProducts(), loadProducts(), loadProfile()]);
+    await Promise.all([
+      loadMetadata(),
+      loadDashboardProducts(),
+      loadProducts(),
+      loadProfile(),
+      loadNotifications({ silent: true, skipMarkRead: true })
+    ]);
+    startNotificationPolling();
     window.location.hash = '#/dashboard';
     setBanner(globalMessage, 'Đăng nhập thành công. Chào mừng bạn quay lại.');
+    window.setTimeout(() => {
+      revealUnreadNotifications();
+    }, 0);
   } catch (error) {
     setBanner(authMessage, error.message, 'error');
   }
@@ -592,15 +626,23 @@ async function init() {
     if (isAuthenticated()) {
       showAppShell();
       await loadProfile().catch(() => null);
-      await loadConversations({ silent: true }).catch(() => null);
+      await Promise.all([
+        loadConversations({ silent: true }).catch(() => null),
+        loadNotifications({ silent: true, skipMarkRead: true }).catch(() => null)
+      ]);
       updateUnreadBadge();
+      startNotificationPolling();
 
       if (!window.location.hash || window.location.hash === '#/login') {
         window.location.hash = '#/dashboard';
+        window.setTimeout(() => {
+          revealUnreadNotifications();
+        }, 0);
         return;
       }
 
       await renderRoute();
+      revealUnreadNotifications();
       return;
     }
 

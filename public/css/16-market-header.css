@@ -184,6 +184,7 @@
   left: 50%; transform: translateX(-50%);
   width: min(720px, calc(100vw - 24px));
 }
+.header-notifications-panel { right: 0; width: min(380px, calc(100vw - 24px)); }
 .header-session-panel { right: 0; width: min(340px, calc(100vw - 24px)); }
 
 /* Panel heads */
@@ -328,4 +329,47 @@
   cursor: pointer;
 }
 .header-session-logout:hover { border-color: rgba(153,27,27,0.3); background: var(--danger-bg); color: var(--danger); }
+
+.notifications-panel-list {
+  display: grid;
+  gap: var(--sp-3);
+  max-height: min(60vh, 520px);
+  overflow: auto;
+}
+
+.notification-entry {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+}
+
+.notification-entry:hover {
+  border-color: var(--line-strong);
+  background: var(--bg-paper);
+}
+
+.notification-entry.is-unread {
+  border-color: rgba(37, 99, 235, 0.25);
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.notification-entry-copy {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.notification-entry strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.notification-entry p,
+.notification-entry span {
+  font-size: 12px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
 

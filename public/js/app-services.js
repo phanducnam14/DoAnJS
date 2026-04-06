@@ -53,6 +53,67 @@ async function loadAdminDashboard() {
   renderAdminDashboard();
 }
 
+async function loadNotifications({ silent = false, skipMarkRead = false } = {}) {
+  if (!isAuthenticated()) {
+    state.notifications = [];
+    state.unreadMeta = { unreadCount: 0, messageCount: 0, notificationCount: 0 };
+    renderNotificationsPanel();
+    updateUnreadBadge();
+    return;
+  }
+
+  if (!silent && notificationsPanelList) {
+    notificationsPanelList.innerHTML = buildStateCard('Đang tải thông báo', 'Hệ thống đang lấy các cập nhật mới nhất dành cho bạn.', 'loading-state');
+  }
+
+  const [notificationsResponse, unreadResponse] = await Promise.all([
+    apiFetch('/api/users/notifications'),
+    apiFetch('/api/meta/unread-notifications').catch(() => ({ data: null }))
+  ]);
+
+  state.notifications = notificationsResponse.data || [];
+  if (unreadResponse.data) {
+    state.unreadMeta = unreadResponse.data;
+  }
+
+  renderNotificationsPanel();
+  updateUnreadBadge();
+
+  if (!skipMarkRead && state.activeHeaderPanel === 'notifications' && state.unreadMeta.notificationCount > 0) {
+    await markAllNotificationsRead();
+  }
+}
+
+async function loadUnreadMeta() {
+  if (!isAuthenticated()) {
+    state.unreadMeta = { unreadCount: 0, messageCount: 0, notificationCount: 0 };
+    updateUnreadBadge();
+    return state.unreadMeta;
+  }
+
+  const response = await apiFetch('/api/meta/unread-notifications');
+  state.unreadMeta = response.data || { unreadCount: 0, messageCount: 0, notificationCount: 0 };
+  updateUnreadBadge();
+  return state.unreadMeta;
+}
+
+async function markAllNotificationsRead() {
+  if (!isAuthenticated()) return;
+
+  await apiFetch('/api/users/notifications/read-all', { method: 'PUT' });
+  state.notifications = state.notifications.map((notification) => ({
+    ...notification,
+    isRead: true
+  }));
+  state.unreadMeta = {
+    ...state.unreadMeta,
+    unreadCount: Math.max(0, (state.unreadMeta.unreadCount || 0) - (state.unreadMeta.notificationCount || 0)),
+    notificationCount: 0
+  };
+  renderNotificationsPanel();
+  updateUnreadBadge();
+}
+
 async function loadAdminUsers() {
   if (!isAdminUser()) return;
 

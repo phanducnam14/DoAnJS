@@ -28,6 +28,10 @@
 
             <!-- Right: actions -->
             <div class="header-bar-actions">
+              <button
+                id="notificationsPanelToggle" type="button" class="header-link header-link-desktop header-link-compact"
+                data-panel-toggle="notifications" aria-expanded="false" aria-controls="headerNotificationsPanel"
+              >Thông báo<span class="unread-badge-dot hidden" id="headerBarNotificationsBadge">0</span></button>
               <a href="#/messages" class="header-link header-link-desktop header-link-compact" id="headerBarMessagesLink">Tin nhắn<span class="unread-badge-dot hidden" id="headerBarMessagesBadge">0</span></a>
               <a href="#/sell" class="btn btn-primary header-sell-btn">+ Đăng tin</a>
               <button
@@ -114,6 +118,20 @@
                 <button type="submit" class="btn btn-primary">Tìm nhanh</button>
               </div>
             </form>
+
+            <section
+              id="headerNotificationsPanel"
+              class="header-overlay-panel header-notifications-panel"
+              aria-label="Thông báo"
+              hidden
+            >
+              <div class="header-panel-head">
+                <strong>Thông báo</strong>
+                <p>Các cập nhật mới về bài đăng và hoạt động quan trọng của bạn.</p>
+              </div>
+
+              <div id="notificationsPanelList" class="notifications-panel-list"></div>
+            </section>
 
             <!-- Session panel -->
             <section
