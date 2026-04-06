@@ -877,7 +877,7 @@
 
     </main><!-- /app-content -->
 
-    <section id="productReportModal" class="report-modal-shell" aria-hidden="true" hidden>
+    <section id="productReportModal" class="report-modal-shell" aria-hidden="true" hidden style="display: none;">
       <div class="report-modal-backdrop" data-action="close-report-modal"></div>
       <div class="report-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="productReportTitle" aria-describedby="productReportDescription">
         <div class="report-modal-panel">
@@ -903,9 +903,9 @@
             </div>
 
             <label class="field" for="productReportReasonText">
-              <span>Giải thích chi tiết</span>
-              <textarea id="productReportReasonText" name="reasonText" rows="5" maxlength="500" placeholder="Mô tả ngắn điều gì khiến bạn cho rằng tin đăng này cần được xem xét." required></textarea>
-              <small class="field-note">Nội dung cụ thể giúp quản trị viên xử lý chính xác hơn.</small>
+              <span>Giải thích chi tiết (không bắt buộc)</span>
+              <textarea id="productReportReasonText" name="reasonText" rows="5" maxlength="500" placeholder="Bạn có thể bổ sung thêm mô tả nếu muốn quản trị viên xem xét nhanh hơn."></textarea>
+              <small class="field-note">Bạn có thể chỉ chọn lý do rồi nhấn gửi báo cáo, hoặc nhập thêm mô tả để quản trị viên dễ kiểm tra hơn.</small>
             </label>
 
             <div id="productReportFeedback" class="inline-box" role="status" aria-live="polite"></div>
@@ -916,13 +916,13 @@
             </div>
           </form>
 
-          <div id="productReportSuccess" class="report-modal-success" hidden>
-            <div class="report-modal-success-mark" aria-hidden="true">✓</div>
-            <div class="report-modal-success-copy">
-              <p class="kicker">Đã tiếp nhận</p>
-              <h4>Báo cáo đã được gửi</h4>
-              <p id="productReportSuccessText">Chúng tôi sẽ chuyển phản ánh này tới nhóm kiểm duyệt để xem xét.</p>
-            </div>
+            <div id="productReportSuccess" class="report-modal-success" hidden>
+              <div class="report-modal-success-mark" aria-hidden="true">✓</div>
+              <div class="report-modal-success-copy">
+                <p class="kicker">Đã tiếp nhận</p>
+                <h4>Báo cáo thành công</h4>
+                <p id="productReportSuccessText">Chúng tôi sẽ chuyển phản ánh này tới nhóm kiểm duyệt để xem xét.</p>
+              </div>
             <div class="form-actions report-modal-actions">
               <button type="button" class="btn btn-primary" data-action="close-report-modal">Hoàn tất</button>
             </div>
