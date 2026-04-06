@@ -286,7 +286,7 @@ async function deleteAdminProduct(productId) {
 }
 
 function normalizeRoute() {
-  const hash = window.location.hash || '#/dashboard';
+  const hash = window.location.hash || getRouteHash();
   const cleanHash = hash.replace('#/', '');
 
   if (cleanHash.startsWith('product/')) {
@@ -298,7 +298,7 @@ function normalizeRoute() {
   }
 
   const allowedRoutes = ['dashboard', 'products', 'messages', 'favorites', 'profile', 'manage-posts', 'settings', 'sell', 'admin-dashboard', 'admin-users', 'admin-posts', 'admin-reports', 'admin-activities'];
-  return { name: allowedRoutes.includes(cleanHash) ? cleanHash : 'dashboard' };
+  return { name: allowedRoutes.includes(cleanHash) ? cleanHash : getDefaultAppRoute() };
 }
 
 async function renderRoute() {
@@ -315,6 +315,17 @@ async function renderRoute() {
   showAppShell();
 
   const route = normalizeRoute();
+
+  if (route.name === 'auth') {
+    window.location.hash = getRouteHash();
+    return;
+  }
+
+  if (isAdminUser() && isAdminRestrictedRoute(route.name)) {
+    state.pendingRouteMessage = 'Tài khoản quản trị đang được chuyển tới khu vực điều phối nội bộ.';
+    window.location.hash = getRouteHash('admin-dashboard');
+    return;
+  }
 
   if (isAdminRoute(route.name) && !isAdminUser()) {
     await loadProfile().catch(() => null);
@@ -363,7 +374,9 @@ async function renderRoute() {
     pageKicker.textContent = kickerMap[route.name] || kickerMap.dashboard;
   }
   pageTitle.textContent = titleMap[route.name] || 'Trang chủ';
-  const activeMenuRoute = route.name === 'product-detail' ? 'products' : route.name;
+  const activeMenuRoute = route.name === 'product-detail'
+    ? (isAdminUser() ? 'admin-posts' : 'products')
+    : route.name;
   pages.forEach((page) => page.classList.toggle('active', page.dataset.page === route.name));
   mainMenuLinks.forEach((link) => {
     const isActive = link.dataset.route === activeMenuRoute;
@@ -375,7 +388,7 @@ async function renderRoute() {
     }
   });
   if (categoryStrip) {
-    categoryStrip.classList.toggle('hidden', !['dashboard', 'products', 'favorites'].includes(route.name));
+    categoryStrip.classList.toggle('hidden', isAdminUser() || !['dashboard', 'products', 'favorites'].includes(route.name));
   }
   clearBanner(globalMessage);
   if (state.pendingRouteMessage) {

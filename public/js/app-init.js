@@ -9,6 +9,10 @@ backToAppBtn?.addEventListener('click', () => {
   }
 
   showAppShell();
+  if (!window.location.hash || window.location.hash === '#/login') {
+    window.location.hash = getRouteHash();
+    return;
+  }
   renderRoute();
 });
 profileForgotPasswordBtn?.addEventListener('click', () => {
@@ -285,16 +289,16 @@ loginForm.addEventListener('submit', async (event) => {
     updateSessionUI();
     clearBanner(authMessage);
     loginForm.reset();
-    showAppShell();
     await Promise.all([
       loadMetadata(),
       loadDashboardProducts(),
       loadProducts(),
       loadProfile(),
-      loadNotifications({ silent: true, skipMarkRead: true })
+      loadNotifications({ silent: true, skipMarkRead: true }),
+      ...(isAdminUser(response.data.user) ? [] : [loadConversations({ silent: true }).catch(() => null)])
     ]);
     startNotificationPolling();
-    window.location.hash = '#/dashboard';
+    window.location.hash = getRouteHash();
     setBanner(globalMessage, 'Đăng nhập thành công. Chào mừng bạn quay lại.');
     window.setTimeout(() => {
       revealUnreadNotifications();
@@ -693,6 +697,7 @@ async function init() {
     toggleDistrictField(filterDistrictField, filterDistrictSelect, true);
   });
 
+  appShell.classList.add('hidden');
   updateSessionUI();
   syncHeaderPanelsUI();
 
@@ -702,17 +707,16 @@ async function init() {
     renderHomeStats();
 
     if (isAuthenticated()) {
-      showAppShell();
       await loadProfile().catch(() => null);
       await Promise.all([
-        loadConversations({ silent: true }).catch(() => null),
-        loadNotifications({ silent: true, skipMarkRead: true }).catch(() => null)
+        loadNotifications({ silent: true, skipMarkRead: true }).catch(() => null),
+        ...(isAdminUser() ? [] : [loadConversations({ silent: true }).catch(() => null)])
       ]);
       updateUnreadBadge();
       startNotificationPolling();
 
       if (!window.location.hash || window.location.hash === '#/login') {
-        window.location.hash = '#/dashboard';
+        window.location.hash = getRouteHash();
         window.setTimeout(() => {
           revealUnreadNotifications();
         }, 0);

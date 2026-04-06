@@ -11,7 +11,8 @@ function scrollMessageThreadToLatest() {
 }
 
 function renderProductDetail(product) {
-  const comparePanel = renderProductComparison(product);
+  const isAdminView = isAdminUser();
+  const comparePanel = isAdminView ? '' : renderProductComparison(product);
   const imageItems = product.images || [];
   const imageUrl = imageItems[0] ? `/${normalizeAssetPath(imageItems[0].url)}` : '';
   const galleryItems = imageItems.slice(1); // Exclude main image
@@ -76,6 +77,44 @@ function renderProductDetail(product) {
       </div>
     </div>
   ` : '';
+  const detailAside = isAdminView ? `
+      <aside class="detail-contact-card">
+        <div>
+          <span class="kicker">Điều hướng quản trị</span>
+          <strong class="price">${formatCurrency(product.price)}</strong>
+        </div>
+        <div class="profile-data compact-data">
+          <div class="profile-row"><strong>Trạng thái duyệt</strong><span><span class="badge ${moderation.className}">${escapeHtml(moderation.label)}</span></span></div>
+          <div class="profile-row"><strong>Người đăng</strong><span>${escapeHtml(sellerName)}</span></div>
+          <div class="profile-row"><strong>Khu vực</strong><span>${escapeHtml(formatLocation(product.location))}</span></div>
+        </div>
+        <div class="detail-contact-actions">
+          <a href="#/admin-posts" class="btn btn-primary">Về kiểm duyệt tin</a>
+          <a href="#/admin-reports" class="btn btn-secondary">Mở xử lý báo cáo</a>
+          <a href="#/admin-dashboard" class="btn btn-secondary">Tổng quan quản trị</a>
+        </div>
+      </aside>
+  ` : `
+      <aside class="detail-contact-card">
+        <div>
+          <span class="kicker">Liên hệ nhanh</span>
+          <strong class="price">${formatCurrency(product.price)}</strong>
+        </div>
+        <div class="profile-data compact-data">
+          <div class="profile-row"><strong>Tình trạng tin</strong><span>${escapeHtml(formatSellingStatus(product))}</span></div>
+          <div class="profile-row"><strong>Người đăng</strong><span>${escapeHtml(sellerName)}</span></div>
+          <div class="profile-row"><strong>Khu vực</strong><span>${escapeHtml(formatLocation(product.location))}</span></div>
+        </div>
+        <div class="detail-contact-actions">
+          ${canMessageSeller ? `<button type="button" class="btn btn-primary" data-action="start-conversation" data-id="${product._id}">${buildButtonLabel('message', 'Nhắn tin người bán')}</button>` : ''}
+          ${canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">${buildButtonLabel('heart', 'Lưu tin')}</button>` : ''}
+          ${canReportNow ? `<button type="button" class="btn btn-secondary${hasReportedNow ? ' product-report-complete' : ''}" data-action="report" data-id="${product._id}" data-report-product-id="${product._id}" data-product-title="${escapeHtml(product.title)}"${hasReportedNow ? ' disabled aria-disabled="true"' : ''}>${hasReportedNow ? 'Đã gửi báo cáo' : 'Báo cáo tin đăng'}</button>` : ''}
+          <button type="button" class="btn btn-secondary" data-action="compare" data-id="${product._id}">So sánh cùng danh mục</button>
+          ${canBoostNow ? `<button type="button" class="btn btn-secondary" data-action="boost" data-id="${product._id}">${buildButtonLabel('rocket', 'Đẩy tin')}</button>` : ''}
+          <a href="#/products" class="btn btn-secondary">${buildButtonLabel('arrow-left', 'Quay lại danh sách')}</a>
+        </div>
+      </aside>
+  `;
 
   productDetail.innerHTML = `
     <div class="product-detail-layout">
@@ -135,25 +174,7 @@ function renderProductDetail(product) {
         </div>
           ${comparePanel}
       </div>
-      <aside class="detail-contact-card">
-        <div>
-          <span class="kicker">Liên hệ nhanh</span>
-          <strong class="price">${formatCurrency(product.price)}</strong>
-        </div>
-        <div class="profile-data compact-data">
-          <div class="profile-row"><strong>Tình trạng tin</strong><span>${escapeHtml(formatSellingStatus(product))}</span></div>
-          <div class="profile-row"><strong>Người đăng</strong><span>${escapeHtml(sellerName)}</span></div>
-          <div class="profile-row"><strong>Khu vực</strong><span>${escapeHtml(formatLocation(product.location))}</span></div>
-        </div>
-        <div class="detail-contact-actions">
-          ${canMessageSeller ? `<button type="button" class="btn btn-primary" data-action="start-conversation" data-id="${product._id}">${buildButtonLabel('message', 'Nhắn tin người bán')}</button>` : ''}
-          ${canFavoriteNow ? `<button type="button" class="btn btn-secondary" data-action="favorite" data-id="${product._id}">${buildButtonLabel('heart', 'Lưu tin')}</button>` : ''}
-          ${canReportNow ? `<button type="button" class="btn btn-secondary${hasReportedNow ? ' product-report-complete' : ''}" data-action="report" data-id="${product._id}" data-report-product-id="${product._id}" data-product-title="${escapeHtml(product.title)}"${hasReportedNow ? ' disabled aria-disabled="true"' : ''}>${hasReportedNow ? 'Đã gửi báo cáo' : 'Báo cáo tin đăng'}</button>` : ''}
-          <button type="button" class="btn btn-secondary" data-action="compare" data-id="${product._id}">So sánh cùng danh mục</button>
-          ${canBoostNow ? `<button type="button" class="btn btn-secondary" data-action="boost" data-id="${product._id}">${buildButtonLabel('rocket', 'Đẩy tin')}</button>` : ''}
-          <a href="#/products" class="btn btn-secondary">${buildButtonLabel('arrow-left', 'Quay lại danh sách')}</a>
-        </div>
-      </aside>
+      ${detailAside}
     </div>
   `;
 }
@@ -381,6 +402,10 @@ function openManualComparisonPanel() {
 }
 
 function renderProductComparison(currentProduct) {
+  if (isAdminUser()) {
+    return '';
+  }
+
   const compareState = state.productComparison;
   const compareItems = Array.isArray(compareState.peers) ? compareState.peers : [];
 

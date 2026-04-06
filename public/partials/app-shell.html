@@ -16,7 +16,7 @@
                 <span>Menu<span class="unread-badge-dot hidden" id="navMenuBadge">0</span></span>
               </button>
 
-              <a href="#/dashboard" class="brand-block" aria-label="Về trang chủ DoAnJS Marketplace">
+              <a id="brandHomeLink" href="#/dashboard" class="brand-block" aria-label="Về trang chủ DoAnJS Marketplace">
                 <span class="brand-icon" aria-hidden="true">D</span>
                 <span class="brand-text">
                   <strong>DoAnJS</strong>
@@ -32,11 +32,12 @@
                 id="notificationsPanelToggle" type="button" class="header-link header-link-desktop header-link-compact"
                 data-panel-toggle="notifications" aria-expanded="false" aria-controls="headerNotificationsPanel"
               >Thông báo<span class="unread-badge-dot hidden" id="headerBarNotificationsBadge">0</span></button>
-              <a href="#/messages" class="header-link header-link-desktop header-link-compact" id="headerBarMessagesLink">Tin nhắn<span class="unread-badge-dot hidden" id="headerBarMessagesBadge">0</span></a>
-              <a href="#/sell" class="btn btn-primary header-sell-btn">+ Đăng tin</a>
+              <a href="#/admin-dashboard" class="header-link header-link-desktop header-link-compact hidden" id="headerBarAdminLink" data-admin-only>Quản trị</a>
+              <a href="#/messages" class="header-link header-link-desktop header-link-compact" id="headerBarMessagesLink" data-user-only>Tin nhắn<span class="unread-badge-dot hidden" id="headerBarMessagesBadge">0</span></a>
+              <a href="#/sell" class="btn btn-primary header-sell-btn" data-user-only>+ Đăng tin</a>
               <button
                 id="searchPanelToggle" type="button" class="header-toggle"
-                data-panel-toggle="search" aria-expanded="false" aria-controls="globalSearchForm"
+                data-panel-toggle="search" data-user-only aria-expanded="false" aria-controls="globalSearchForm"
                 aria-label="Tìm kiếm"
               >
                 <span class="header-toggle-icon" aria-hidden="true">⌕</span>
@@ -71,13 +72,13 @@
               </div>
 
                <nav id="mainMenu" class="main-nav" aria-label="Điều hướng chính">
-                 <a href="#/dashboard"    data-route="dashboard">Trang chủ</a>
-                 <a href="#/products"     data-route="products">Sản phẩm</a>
-                 <a href="#/messages"     data-route="messages" id="messagesMenuLink">Tin nhắn<span class="unread-badge-dot hidden" id="messagesBadge">0</span></a>
-                 <a href="#/favorites"    data-route="favorites">Yêu thích</a>
-                 <a href="#/profile"      data-route="profile">Hồ sơ</a>
-                 <a href="#/manage-posts" data-route="manage-posts">Quản lý tin đăng</a>
-                 <a href="#/settings"     data-route="settings">Cài đặt</a>
+                  <a href="#/dashboard"    data-route="dashboard" data-user-only>Trang chủ</a>
+                  <a href="#/products"     data-route="products" data-user-only>Sản phẩm</a>
+                  <a href="#/messages"     data-route="messages" id="messagesMenuLink" data-user-only>Tin nhắn<span class="unread-badge-dot hidden" id="messagesBadge">0</span></a>
+                  <a href="#/favorites"    data-route="favorites" data-user-only>Yêu thích</a>
+                  <a href="#/profile"      data-route="profile" data-user-only>Hồ sơ</a>
+                  <a href="#/manage-posts" data-route="manage-posts" data-user-only>Quản lý tin đăng</a>
+                  <a href="#/settings"     data-route="settings" data-user-only>Cài đặt</a>
                  <a href="#/admin-dashboard"  data-route="admin-dashboard"  data-admin-only class="hidden">Tổng quan quản trị</a>
                  <a href="#/admin-users"      data-route="admin-users"      data-admin-only class="hidden">Quản lý người dùng</a>
                  <a href="#/admin-posts"      data-route="admin-posts"      data-admin-only class="hidden">Kiểm duyệt tin</a>
@@ -87,9 +88,12 @@
 
               <div class="header-panel-support">
                 <div class="header-quick-actions">
-                  <a href="#/products" class="header-link">Duyệt tin</a>
-                  <a href="#/messages" class="header-link" id="headerMessagesLink">Tin nhắn<span class="unread-badge-dot hidden" id="headerMessagesBadge">0</span></a>
-                  <a href="#/sell" class="btn btn-primary">Đăng tin</a>
+                  <a href="#/products" class="header-link" data-user-only>Duyệt tin</a>
+                  <a href="#/messages" class="header-link" id="headerMessagesLink" data-user-only>Tin nhắn<span class="unread-badge-dot hidden" id="headerMessagesBadge">0</span></a>
+                  <a href="#/sell" class="btn btn-primary" data-user-only>Đăng tin</a>
+                  <a href="#/admin-dashboard" class="header-link hidden" data-admin-only>Tổng quan</a>
+                  <a href="#/admin-posts" class="header-link hidden" data-admin-only>Kiểm duyệt tin</a>
+                  <a href="#/admin-reports" class="header-link hidden" data-admin-only>Xử lý báo cáo</a>
                 </div>
               </div>
             </section>
@@ -98,6 +102,7 @@
             <form
               id="globalSearchForm"
               class="header-overlay-panel header-search-panel"
+              data-user-only
               role="search"
               hidden
               aria-label="Tìm kiếm toàn bộ sản phẩm"
@@ -199,7 +204,7 @@
       <!-- ======================================================
            DASHBOARD
            ====================================================== -->
-      <section class="page active" data-page="dashboard">
+      <section class="page" data-page="dashboard">
 
         <!-- Hero -->
         <section class="market-hero-shell" aria-label="Giới thiệu">
