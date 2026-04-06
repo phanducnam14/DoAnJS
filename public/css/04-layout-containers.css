@@ -1,0 +1,10 @@
+/* ============================================================
+   LAYOUT CONTAINERS
+   ============================================================ */
+.container {
+  width: min(var(--container-max), calc(100% - 32px));
+  margin-inline: auto;
+}
+
+.app-shell { min-height: 100vh; }
+

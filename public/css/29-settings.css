@@ -1,0 +1,19 @@
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+.settings-layout { display: grid; gap: var(--sp-6); }
+.settings-list { display: grid; gap: var(--sp-3); }
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  padding: var(--sp-5);
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+.setting-row > div { display: grid; gap: var(--sp-1); }
+.setting-row strong { font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+.setting-row p      { font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
+

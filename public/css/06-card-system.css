@@ -1,0 +1,19 @@
+/* ============================================================
+   CARD SYSTEM
+   ============================================================ */
+.card {
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: var(--sp-7);
+}
+
+.card-sm  { padding: var(--sp-5); border-radius: var(--r-lg); }
+.card-xs  { padding: var(--sp-4); border-radius: var(--r-md); }
+
+.card-dark {
+  background: var(--bg-dark);
+  border-color: var(--line-invert);
+  color: var(--ink-invert);
+}
+

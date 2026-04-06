@@ -1,0 +1,61 @@
+/* ============================================================
+   EMPTY / LOADING / ERROR STATES
+   ============================================================ */
+.empty-state, .loading-state, .error-state {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-9) var(--sp-7);
+  text-align: center;
+  border: 1px dashed var(--line-mid);
+  border-radius: var(--r-xl);
+  background: var(--bg-subtle);
+}
+.empty-state strong, .loading-state strong, .error-state strong {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0;
+}
+.empty-state p, .loading-state p, .error-state p {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-top: var(--sp-2);
+  line-height: 1.65;
+  max-width: 40ch;
+}
+.error-state { border-color: rgba(153,27,27,0.2); }
+
+/* State eyebrow */
+.state-eyebrow {
+  display: inline-flex;
+  height: 24px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--bg-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: var(--sp-3);
+}
+
+/* Skeleton loader shimmer */
+.loading-state {
+  position: relative;
+  overflow: hidden;
+}
+.loading-state::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.8s infinite;
+}
+@keyframes shimmer {
+  to { transform: translateX(100%); }
+}
+

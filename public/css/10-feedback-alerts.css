@@ -1,0 +1,46 @@
+/* ============================================================
+   FEEDBACK / ALERTS
+   ============================================================ */
+.feedback-banner {
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  border: 1px solid var(--line);
+  background: var(--bg-subtle);
+  color: var(--ink-soft);
+  margin-top: var(--sp-5);
+}
+.feedback-banner:empty { display: none; }
+.feedback-banner.error {
+  background: var(--danger-bg);
+  border-color: rgba(153,27,27,0.15);
+  color: var(--danger);
+}
+.feedback-banner.success {
+  background: var(--ok-bg);
+  border-color: rgba(45,106,79,0.15);
+  color: var(--ok);
+}
+
+.inline-box {
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  border: 1px solid var(--line);
+  background: var(--bg-subtle);
+  margin-top: var(--sp-5);
+}
+.inline-box:empty { display: none; }
+.inline-box.error {
+  background: var(--danger-bg);
+  border-color: rgba(153,27,27,0.15);
+  color: var(--danger);
+}
+.inline-box.success {
+  background: var(--ok-bg);
+  border-color: rgba(45,106,79,0.15);
+  color: var(--ok);
+}
+

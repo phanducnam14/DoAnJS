@@ -1,0 +1,171 @@
+/* ============================================================
+   PRODUCT DETAIL
+   ============================================================ */
+.product-detail-shell { display: grid; gap: var(--sp-6); }
+.product-detail-layout { display: grid; gap: var(--sp-6); align-items: start; }
+
+/* Gallery */
+.detail-gallery-shell { display: grid; gap: var(--sp-3); }
+.media-box {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--bg-subtle);
+  min-height: 300px;
+  display: grid;
+  place-items: center;
+}
+.media-box img { width: 100%; height: 100%; object-fit: cover; }
+
+.detail-gallery-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: var(--sp-2); }
+.detail-thumb {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  aspect-ratio: 1;
+  cursor: pointer;
+  background: var(--bg-subtle);
+}
+.detail-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.detail-thumb:hover { border-color: var(--line-strong); }
+
+.detail-image-manager {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-6);
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+}
+
+.detail-image-manager-grid {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.detail-image-manager-card {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-subtle);
+}
+
+.detail-image-manager-preview {
+  overflow: hidden;
+  border-radius: var(--r-md);
+  aspect-ratio: 4 / 3;
+  background: var(--bg-muted);
+}
+
+.detail-image-manager-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail-image-manager-copy {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.detail-image-manager-copy strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.detail-image-manager-copy p {
+  font-size: 12px;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+.detail-image-manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.detail-image-manager-actions .btn {
+  flex: 1 1 140px;
+}
+
+/* Detail content */
+.detail-content { display: grid; gap: var(--sp-5); }
+.detail-heading { display: grid; gap: var(--sp-3); }
+.detail-heading h2 {
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  line-height: 1.0;
+  margin: 0;
+}
+
+.detail-tags { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
+.detail-time { font-size: 12px; font-weight: 600; color: var(--ink-faint); }
+.detail-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.detail-description-card,
+.detail-info-card,
+.detail-contact-card,
+.detail-seller-card {
+  padding: var(--sp-6);
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.detail-contact-card {
+  position: sticky;
+  top: var(--sticky-top);
+}
+.detail-contact-card strong { font-size: 13px; font-weight: 700; color: var(--ink); display: block; margin-bottom: var(--sp-1); }
+.detail-contact-card .price { margin-top: var(--sp-2); }
+.detail-contact-actions { display: grid; gap: var(--sp-3); margin-top: var(--sp-2); }
+.detail-contact-actions .btn, .detail-contact-actions a { width: 100%; text-align: center; justify-content: center; }
+
+.detail-info-grid { display: grid; gap: var(--sp-3); grid-template-columns: 1fr; }
+
+.detail-seller-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.detail-seller-head strong { font-size: 14px; font-weight: 700; color: var(--ink); display: block; margin-bottom: var(--sp-1); }
+
+/* Seller avatar */
+.seller-avatar-mini {
+  width: 48px; height: 48px;
+  border-radius: var(--r-sm);
+  background: var(--bg-muted);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+.avatar-fallback {
+  width: 48px; height: 48px;
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--ink-invert);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+

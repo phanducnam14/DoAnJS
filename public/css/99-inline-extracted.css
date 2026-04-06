@@ -1,0 +1,42 @@
+/* Extracted former inline styles */
+.header-link-compact {
+  min-height: 40px;
+  font-size: 13px;
+}
+
+.header-link-center {
+  justify-content: center;
+}
+
+.header-link-compact-nowrap {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.surface-card {
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+}
+
+.surface-card-lg {
+  padding: var(--sp-7);
+}
+
+.surface-card-md {
+  padding: var(--sp-6);
+}
+
+.top-gap-5 {
+  margin-top: var(--sp-5);
+}
+
+.form-divider-top {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--line);
+}

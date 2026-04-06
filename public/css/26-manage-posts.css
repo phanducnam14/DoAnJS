@@ -1,0 +1,28 @@
+/* ============================================================
+   MANAGE POSTS
+   ============================================================ */
+.manage-overview-shell {
+  padding: var(--sp-7);
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+}
+.manage-overview-grid { display: grid; gap: var(--sp-4); margin-top: var(--sp-5); }
+
+/* Summary cards on dark bg (manage posts uses light bg) */
+.manage-overview-grid .summary-card {
+  padding: var(--sp-5);
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.manage-overview-grid .summary-card > span {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-faint); display: block; margin-bottom: var(--sp-2);
+}
+.manage-overview-grid .summary-card strong {
+  font-size: clamp(28px,5vw,42px); font-weight: 800; letter-spacing: -0.05em;
+  color: var(--ink); line-height: 1;
+}
+.manage-overview-grid .summary-card-copy p { font-size: 13px; color: var(--ink-muted); margin-top: var(--sp-2); }
+

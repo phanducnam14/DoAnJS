@@ -1,0 +1,32 @@
+/* ============================================================
+   PAGE INTRO BAR
+   ============================================================ */
+.page-intro-shell {
+  display: grid;
+  gap: var(--sp-5);
+  padding: var(--sp-6) var(--sp-7);
+  background: var(--bg-paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  margin-bottom: var(--sp-6);
+}
+.page-intro-copy { display: grid; gap: var(--sp-2); }
+.page-intro-copy h1 {
+  font-size: clamp(30px, 5vw, 48px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  line-height: 1.0;
+}
+.page-intro-note {
+  padding: var(--sp-5) var(--sp-6);
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  display: grid;
+  gap: var(--sp-2);
+  align-content: center;
+}
+.page-intro-note strong { font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+.page-intro-note p { font-size: 13px; color: var(--ink-muted); line-height: 1.65; }
+

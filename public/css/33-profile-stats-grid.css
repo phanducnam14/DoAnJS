@@ -1,0 +1,14 @@
+/* ============================================================
+   PROFILE STATS GRID
+   ============================================================ */
+.profile-stat-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: var(--sp-3); }
+.profile-stat {
+  padding: var(--sp-4);
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  text-align: center;
+}
+.profile-stat strong { font-size: 24px; font-weight: 800; letter-spacing: -0.04em; color: var(--ink); display: block; }
+.profile-stat span   { font-size: 11px; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; }
+

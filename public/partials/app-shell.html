@@ -1,0 +1,836 @@
+  <div id="appShell" class="app-shell hidden">
+
+    <!-- HEADER -->
+    <header class="market-header">
+      <div class="container">
+        <div class="market-header-shell">
+          <div class="market-header-bar">
+
+            <!-- Left: nav toggle + brand -->
+            <div class="header-bar-primary">
+              <button
+                id="navPanelToggle" type="button" class="header-toggle"
+                data-panel-toggle="nav" aria-expanded="false" aria-controls="headerNavPanel"
+              >
+                <span class="header-toggle-icon" aria-hidden="true">☰</span>
+                <span>Menu<span class="unread-badge-dot hidden" id="navMenuBadge">0</span></span>
+              </button>
+
+              <a href="#/dashboard" class="brand-block" aria-label="Về trang chủ DoAnJS Marketplace">
+                <span class="brand-icon" aria-hidden="true">D</span>
+                <span class="brand-text">
+                  <strong>DoAnJS</strong>
+                  <small>Marketplace</small>
+                </span>
+              </a>
+
+            </div>
+
+            <!-- Right: actions -->
+            <div class="header-bar-actions">
+              <a href="#/messages" class="header-link header-link-desktop header-link-compact" id="headerBarMessagesLink">Tin nhắn<span class="unread-badge-dot hidden" id="headerBarMessagesBadge">0</span></a>
+              <a href="#/sell" class="btn btn-primary header-sell-btn">+ Đăng tin</a>
+              <button
+                id="searchPanelToggle" type="button" class="header-toggle"
+                data-panel-toggle="search" aria-expanded="false" aria-controls="globalSearchForm"
+                aria-label="Tìm kiếm"
+              >
+                <span class="header-toggle-icon" aria-hidden="true">⌕</span>
+                <span class="sr-only">Tìm kiếm</span>
+              </button>
+              <button
+                id="sessionPanelToggle" type="button" class="header-toggle"
+                data-panel-toggle="session" aria-expanded="false" aria-controls="headerSessionPanel"
+                aria-label="Tài khoản"
+              >
+                <span id="sessionEntryAvatar" class="header-profile-avatar" aria-hidden="true">TK</span>
+                <span class="header-profile-meta">
+                  <strong id="sessionEntryLabel">Tài khoản</strong>
+                  <small id="sessionEntrySubtext">Đăng nhập</small>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Overlay panels container -->
+          <div class="header-overlay-region">
+
+            <!-- Nav panel -->
+            <section
+              id="headerNavPanel"
+              class="header-overlay-panel header-nav-panel"
+              aria-label="Điều hướng nhanh"
+              hidden
+            >
+              <div class="header-panel-head">
+                <strong>Điều hướng chính</strong>
+              </div>
+
+               <nav id="mainMenu" class="main-nav" aria-label="Điều hướng chính">
+                 <a href="#/dashboard"    data-route="dashboard">Trang chủ</a>
+                 <a href="#/products"     data-route="products">Sản phẩm</a>
+                 <a href="#/messages"     data-route="messages" id="messagesMenuLink">Tin nhắn<span class="unread-badge-dot hidden" id="messagesBadge">0</span></a>
+                 <a href="#/favorites"    data-route="favorites">Yêu thích</a>
+                 <a href="#/profile"      data-route="profile">Hồ sơ</a>
+                 <a href="#/manage-posts" data-route="manage-posts">Quản lý tin đăng</a>
+                 <a href="#/settings"     data-route="settings">Cài đặt</a>
+                 <a href="#/admin-dashboard"  data-route="admin-dashboard"  data-admin-only class="hidden">Tổng quan quản trị</a>
+                 <a href="#/admin-users"      data-route="admin-users"      data-admin-only class="hidden">Quản lý người dùng</a>
+                 <a href="#/admin-posts"      data-route="admin-posts"      data-admin-only class="hidden">Kiểm duyệt tin</a>
+                 <a href="#/admin-activities" data-route="admin-activities" data-admin-only class="hidden">Nhật ký quản trị</a>
+               </nav>
+
+              <div class="header-panel-support">
+                <div class="header-quick-actions">
+                  <a href="#/products" class="header-link">Duyệt tin</a>
+                  <a href="#/messages" class="header-link" id="headerMessagesLink">Tin nhắn<span class="unread-badge-dot hidden" id="headerMessagesBadge">0</span></a>
+                  <a href="#/sell" class="btn btn-primary">Đăng tin</a>
+                </div>
+              </div>
+            </section>
+
+            <!-- Search panel -->
+            <form
+              id="globalSearchForm"
+              class="header-overlay-panel header-search-panel"
+              role="search"
+              hidden
+              aria-label="Tìm kiếm toàn bộ sản phẩm"
+            >
+              <div class="header-panel-head">
+                <strong>Tìm kiếm sản phẩm</strong>
+              </div>
+
+              <label class="sr-only" for="globalSearchInput">Tìm kiếm toàn bộ sản phẩm</label>
+              <div class="header-search-input">
+                <span class="search-icon" aria-hidden="true">⌕</span>
+                <input
+                  id="globalSearchInput" type="text"
+                  placeholder="Tìm sản phẩm, khu vực hoặc nhu cầu đang cần..."
+                />
+              </div>
+              <div class="header-search-actions">
+                <a href="#/products" class="btn btn-secondary">Khám phá</a>
+                <button type="submit" class="btn btn-primary">Tìm nhanh</button>
+              </div>
+            </form>
+
+            <!-- Session panel -->
+            <section
+              id="headerSessionPanel"
+              class="header-overlay-panel header-session-panel"
+              aria-label="Phiên người dùng"
+              hidden
+            >
+              <div class="header-panel-head">
+                <strong>Phiên người dùng</strong>
+              </div>
+
+              <div class="session-shell">
+                <div class="session-chip" aria-live="polite">
+                  <div id="sessionPanelAvatar" class="session-avatar" aria-hidden="true">TK</div>
+                  <div class="session-chip-copy">
+                    <strong id="sessionStatus">Chưa đăng nhập</strong>
+                    <span id="sessionUser">Vui lòng đăng nhập để sử dụng hệ thống.</span>
+                  </div>
+                </div>
+                <div class="header-session-actions">
+                  <a id="sessionProfileLink" href="#/profile"   class="header-link header-link-center hidden">Hồ sơ</a>
+                  <a id="sessionFavoritesLink" href="#/favorites" class="header-link header-link-center hidden">Yêu thích</a>
+                  <button
+                    id="sessionLoginBtn" type="button"
+                    class="btn btn-primary full-width"
+                  >Đăng nhập</button>
+                  <button
+                    id="sessionRegisterBtn" type="button"
+                    class="btn btn-secondary full-width"
+                  >Đăng ký</button>
+                  <button
+                    id="logoutBtn" type="button"
+                    class="logout-text header-session-logout hidden full-width"
+                  >Đăng xuất</button>
+                </div>
+              </div>
+            </section>
+
+          </div><!-- /header-overlay-region -->
+        </div><!-- /market-header-shell -->
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main id="mainContent" class="container app-content">
+
+      <!-- Page intro bar (always visible per-page) -->
+      <section class="page-intro-shell">
+        <div class="page-intro-copy">
+          <p id="pageKicker" class="kicker">Không gian mua bán</p>
+          <h1 id="pageTitle">Trang chủ</h1>
+        </div>
+      </section>
+
+      <!-- Global feedback -->
+      <div id="globalMessage" class="feedback-banner hidden" role="status" aria-live="polite"></div>
+
+      <!-- Category strip -->
+      <section id="categoryStrip" class="category-strip">
+        <div id="categoryChips" class="chip-row"></div>
+      </section>
+
+      <!-- ======================================================
+           DASHBOARD
+           ====================================================== -->
+      <section class="page active" data-page="dashboard">
+
+        <!-- Hero -->
+        <section class="market-hero-shell" aria-label="Giới thiệu">
+          <div class="hero-copy">
+            <div class="hero-actions">
+              <a href="#/products" class="btn btn-primary btn-lg">Khám phá sản phẩm</a>
+              <a href="#/sell"     class="btn btn-secondary btn-lg">Đăng tin mới</a>
+            </div>
+          </div>
+
+          <div class="market-hero-side">
+            <div class="hero-stat-grid">
+              <article class="summary-card">
+                <span>Tin đăng</span>
+                <strong id="homeProductCount">0</strong>
+              </article>
+              <article class="summary-card">
+                <span>Danh mục</span>
+                <strong id="homeCategoryCount">0</strong>
+              </article>
+              <article class="summary-card">
+                <span>Khu vực</span>
+                <strong id="homeLocationCount">0</strong>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <!-- Browse lanes -->
+        <section class="browse-lanes" aria-label="Lối tắt nhanh">
+          <article class="lane-card">
+            <a href="#/products" class="text-link">Mở danh sách sản phẩm →</a>
+          </article>
+          <article class="lane-card">
+            <a href="#/sell" class="text-link">Tạo tin đăng mới →</a>
+          </article>
+          <article class="lane-card">
+            <a href="#/messages" class="text-link">Đi đến tin nhắn →</a>
+          </article>
+        </section>
+
+        <!-- Dashboard stream -->
+        <section class="dashboard-stream" aria-label="Nội dung chính">
+
+          <!-- Main: featured products -->
+          <div class="dashboard-main">
+            <section class="surface-card surface-card-lg">
+              <div class="section-head section-head-wrap">
+                <a href="#/products" class="header-link header-link-compact-nowrap">Xem tất cả</a>
+              </div>
+              <div id="dashboardProducts" class="product-grid"></div>
+            </section>
+          </div>
+
+          <!-- Side: quick actions + tips -->
+          <aside class="dashboard-side">
+
+            <section class="surface-card surface-card-md">
+              <div class="action-stack">
+                <a href="#/favorites" class="action-card">
+                  <strong>Danh sách yêu thích</strong>
+                </a>
+                <a href="#/profile" class="action-card">
+                  <strong>Hồ sơ cá nhân</strong>
+                </a>
+                <a href="#/manage-posts" class="action-card">
+                  <strong>Quản lý tin đăng</strong>
+                </a>
+              </div>
+            </section>
+
+          </aside>
+        </section>
+      </section>
+
+      <!-- ======================================================
+           PRODUCTS LIST
+           ====================================================== -->
+      <section class="page" data-page="products">
+        <div class="browse-layout">
+
+          <!-- Filter sidebar -->
+          <aside class="browse-filters-shell">
+            <div class="section-head section-head-wrap compact-head">
+              <div>
+                <p class="kicker">Tìm và lọc</p>
+                <h3>Bộ lọc sản phẩm</h3>
+              </div>
+              <button id="refreshProductsBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+            </div>
+
+            <form id="productFilters" class="filter-grid">
+              <label class="field">
+                <span>Từ khóa</span>
+                <input type="text" name="search" placeholder="Tìm theo tên sản phẩm…" />
+              </label>
+              <label class="field">
+                <span>Danh mục</span>
+                <select name="category" id="filterCategory">
+                  <option value="">Tất cả danh mục</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Thành phố</span>
+                <select name="province" id="filterProvince">
+                  <option value="">Tất cả thành phố</option>
+                </select>
+              </label>
+              <label class="field hidden" id="filterDistrictField">
+                <span>Quận / huyện</span>
+                <select name="district" id="filterDistrict">
+                  <option value="">Tất cả quận / huyện</option>
+                </select>
+              </label>
+              <label class="checkbox-field">
+                <input type="checkbox" name="boosted" />
+                <span>Chỉ xem tin đã boost</span>
+              </label>
+              <div class="filter-actions span-all">
+                <button type="submit" class="btn btn-primary">Áp dụng</button>
+                <button id="clearFiltersBtn" type="button" class="btn btn-secondary">Xóa bộ lọc</button>
+              </div>
+            </form>
+
+          </aside>
+
+          <!-- Results -->
+          <section class="browse-results">
+            <section class="browse-results-shell">
+              <div class="section-head section-head-wrap">
+                <div>
+                  <p class="kicker">Kết quả tìm kiếm</p>
+                  <h3>Sản phẩm đang mở bán</h3>
+                </div>
+                <a href="#/sell" class="btn btn-primary btn-sm">+ Đăng tin</a>
+              </div>
+              <div id="productsActiveFilters" class="active-filter-row" aria-live="polite"></div>
+              <div id="productsSummary" class="list-summary" aria-live="polite">Đang sẵn sàng hiển thị kết quả.</div>
+              <section class="compare-toolbar" aria-live="polite">
+                <div class="compare-toolbar-copy">
+                  <p class="kicker">So sánh thủ công</p>
+                  <h4 class="compare-toolbar-title t-h3">Chọn ít nhất 2 sản phẩm trong cùng danh mục</h4>
+                  <p id="compareModeSummary" class="section-helper">Bật chế độ so sánh để chọn sản phẩm trực tiếp từ danh sách đang lọc.</p>
+                </div>
+                <div class="compare-toolbar-actions">
+                  <button id="toggleCompareModeBtn" type="button" class="btn btn-secondary btn-sm">Bật chế độ so sánh</button>
+                  <button id="openManualCompareBtn" type="button" class="btn btn-primary btn-sm" disabled>Chọn ít nhất 2 sản phẩm</button>
+                </div>
+              </section>
+            </section>
+
+            <div id="productsList" class="product-grid"></div>
+            <section id="manualComparePanel" class="detail-info-card manual-compare-panel" hidden></section>
+
+            <section class="pagination-shell">
+              <div id="paginationInfo" class="pagination-info">Trang 1 / 1</div>
+              <div class="pagination-actions">
+                <button id="prevPageBtn" type="button" class="btn btn-secondary">← Trang trước</button>
+                <button id="nextPageBtn" type="button" class="btn btn-secondary">Trang sau →</button>
+              </div>
+            </section>
+          </section>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           PRODUCT DETAIL
+           ====================================================== -->
+      <section class="page" data-page="product-detail">
+        <div id="productDetail" class="product-detail-shell"></div>
+      </section>
+
+      <!-- ======================================================
+           SELL / CREATE PRODUCT
+           ====================================================== -->
+      <section class="page" data-page="sell">
+        <div class="sell-layout">
+
+          <!-- Guide sidebar -->
+          <!-- Form -->
+          <section class="sell-form-shell">
+            <form id="createProductForm" class="form-grid form-grid-2">
+              <label class="field">
+                <span>Tiêu đề sản phẩm</span>
+                <input type="text" name="title" placeholder="Ví dụ: iPhone 15 Pro Max 256GB" required />
+              </label>
+              <label class="field">
+                <span>Giá bán</span>
+                <input type="number" name="price" min="0" placeholder="Nhập giá bán" required />
+              </label>
+              <label class="field">
+                <span>Tình trạng</span>
+                <select name="condition" required>
+                  <option value="">Chọn tình trạng</option>
+                  <option value="new">Mới</option>
+                  <option value="like_new">Như mới</option>
+                  <option value="good">Tốt</option>
+                  <option value="used">Đã sử dụng</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Danh mục</span>
+                <select name="category" id="sellCategory" required>
+                  <option value="">Chọn danh mục</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Thành phố</span>
+                <select id="sellProvince" required>
+                  <option value="">Chọn thành phố</option>
+                </select>
+              </label>
+              <label class="field hidden" id="sellDistrictField">
+                <span>Quận / huyện</span>
+                <select id="sellDistrict" disabled required>
+                  <option value="">Chọn quận / huyện</option>
+                </select>
+                <input type="hidden" name="location" id="sellLocation" />
+              </label>
+              <label class="field span-all">
+                <span>Hình ảnh</span>
+                <input id="sellImages" type="file" name="images" multiple accept="image/*" />
+              </label>
+              <label class="field span-all">
+                <span>Mô tả sản phẩm</span>
+                <textarea name="description" rows="6" placeholder="Mô tả chi tiết sản phẩm, phụ kiện, tình trạng, bảo hành…" required></textarea>
+              </label>
+              <div class="span-all form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">Đăng sản phẩm</button>
+              </div>
+            </form>
+
+            <div id="sellResult" class="inline-box" role="status" aria-live="polite"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           FAVORITES
+           ====================================================== -->
+      <section class="page" data-page="favorites">
+        <section class="surface-card surface-card-lg">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Danh sách quan tâm</p>
+              <h3>Sản phẩm yêu thích</h3>
+            </div>
+            <button id="refreshFavoritesBtn" type="button" class="btn btn-secondary btn-sm">Tải danh sách</button>
+          </div>
+        </section>
+        <div id="favoritesList" class="product-grid"></div>
+      </section>
+
+      <!-- ======================================================
+           MESSAGES
+           ====================================================== -->
+      <section class="page" data-page="messages">
+        <section class="messages-hero">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Trao đổi mua bán</p>
+              <h3>Tin nhắn với người đăng tin</h3>
+            </div>
+            <button id="refreshConversationsBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+          </div>
+        </section>
+
+        <section class="messages-layout top-gap-5">
+          <!-- Conversations list -->
+          <article class="messages-sidebar">
+            <div class="messages-panel-head">
+              <strong>Hội thoại đang mở</strong>
+            </div>
+            <div id="conversationsList" class="messages-list"></div>
+          </article>
+
+          <!-- Thread -->
+          <article class="messages-thread-shell">
+            <div id="messageThread" class="messages-thread"></div>
+
+            <form id="messageForm" class="message-form">
+              <label class="field">
+                <span>Nội dung tin nhắn</span>
+                <textarea id="messageInput" name="content" rows="3" placeholder="Nhập nội dung cần trao đổi…" required></textarea>
+              </label>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Gửi tin nhắn</button>
+              </div>
+            </form>
+          </article>
+        </section>
+      </section>
+
+      <!-- ======================================================
+           PROFILE
+           ====================================================== -->
+      <section class="page" data-page="profile">
+        <div class="profile-layout">
+
+          <section class="surface-card surface-card-lg">
+            <div class="section-head compact-head">
+              <div>
+                <p class="kicker">Tài khoản</p>
+                <h3>Thông tin cá nhân</h3>
+              </div>
+            </div>
+            <div id="profileSummary" class="profile-summary"></div>
+          </section>
+
+          <section class="surface-card surface-card-lg">
+            <div class="section-head">
+              <div>
+                <p class="kicker">Cập nhật</p>
+                <h3>Chỉnh sửa hồ sơ</h3>
+              </div>
+            </div>
+
+            <form id="profileForm" class="form-grid">
+              <label class="field">
+                <span>Họ tên</span>
+                <input type="text" name="name" placeholder="Nhập họ tên" required />
+              </label>
+              <label class="field">
+                <span>Số điện thoại</span>
+                <input type="text" name="phone" placeholder="Nhập số điện thoại" />
+              </label>
+              <label class="field">
+                <span>Thành phố</span>
+                <select id="profileProvince">
+                  <option value="">Chọn thành phố</option>
+                </select>
+              </label>
+              <label class="field hidden" id="profileDistrictField">
+                <span>Quận / huyện</span>
+                <select id="profileDistrict" disabled>
+                  <option value="">Chọn quận / huyện</option>
+                </select>
+                <input type="hidden" name="location" id="profileLocation" />
+              </label>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+              </div>
+            </form>
+
+            <form id="avatarForm" class="form-grid form-divider-top">
+              <label class="field">
+                <span>Ảnh đại diện</span>
+                <input type="file" name="images" accept="image/*" required />
+              </label>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-secondary">Tải avatar</button>
+              </div>
+            </form>
+
+            <div class="account-support-card">
+              <div>
+                <p class="kicker">Hỗ trợ truy cập</p>
+                <h4>Quên mật khẩu?</h4>
+                <p class="account-support-copy">Mở lại biểu mẫu khôi phục để đặt mật khẩu mới bằng email và số điện thoại đã đăng ký.</p>
+              </div>
+              <button type="button" id="profileForgotPasswordBtn" class="btn btn-secondary">Khôi phục mật khẩu</button>
+            </div>
+
+            <div id="profileResult" class="inline-box" role="status" aria-live="polite"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           MANAGE POSTS
+           ====================================================== -->
+      <section class="page" data-page="manage-posts">
+        <section class="manage-overview-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Quản lý tin đăng</p>
+              <h3>Tin của tôi</h3>
+            </div>
+            <a href="#/sell" class="btn btn-primary">+ Đăng tin mới</a>
+          </div>
+
+          <div class="manage-overview-grid">
+            <article class="summary-card">
+              <span>Tin đang hiển thị</span>
+              <strong id="myPostsActiveCount">0</strong>
+            </article>
+            <article class="summary-card">
+              <span>Đã đánh dấu bán</span>
+              <strong id="myPostsSoldCount">0</strong>
+            </article>
+            <article class="summary-card summary-card-copy">
+              <span>Nhắc nhở</span>
+              <strong>Cập nhật mô tả &amp; hình ảnh</strong>
+            </article>
+          </div>
+        </section>
+
+        <div class="profile-product-columns">
+          <section class="surface-card surface-card-md">
+            <div class="section-head section-head-wrap compact-head">
+              <div>
+                <p class="kicker">Đang hiển thị</p>
+                <h3>Tin đang bán</h3>
+              </div>
+            </div>
+            <div id="myProductsList" class="product-grid compact-grid"></div>
+          </section>
+
+          <section class="surface-card surface-card-md">
+            <div class="section-head section-head-wrap compact-head">
+              <div>
+                <p class="kicker">Đã chốt đơn</p>
+                <h3>Hàng đã bán</h3>
+              </div>
+            </div>
+            <div id="soldProductsList" class="product-grid compact-grid"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           SETTINGS
+           ====================================================== -->
+      <section class="page" data-page="settings">
+        <div class="settings-layout">
+
+          <section class="surface-card surface-card-lg">
+            <div class="section-head">
+              <div>
+                <p class="kicker">Thiết lập</p>
+                <h3>Cài đặt hệ thống</h3>
+              </div>
+            </div>
+            <div class="settings-list">
+              <article class="setting-row">
+                <div>
+                  <strong>Phiên đăng nhập</strong>
+                </div>
+                <span class="status-tag active-tag">Đang hoạt động</span>
+              </article>
+              <article class="setting-row">
+                <div>
+                  <strong>Dữ liệu danh mục</strong>
+                </div>
+                <span class="status-tag active-tag">Đã kết nối</span>
+              </article>
+              <article class="setting-row">
+                <div>
+                  <strong>Giao diện</strong>
+                </div>
+                <span class="status-tag active-tag">Hoàn tất</span>
+              </article>
+            </div>
+          </section>
+
+        </div>
+      </section>
+
+      <!-- ======================================================
+           ADMIN DASHBOARD
+           ====================================================== -->
+      <section class="page" data-page="admin-dashboard">
+        <div class="admin-dashboard-shell">
+          <section class="admin-dashboard-command">
+            <div class="admin-dashboard-command-bar">
+              <div class="admin-dashboard-command-copy">
+                <div>
+                  <p class="kicker">Quản trị hệ thống</p>
+                  <h3>Trung tâm điều phối vận hành</h3>
+                  <p class="section-helper">Quan sát hàng chờ kiểm duyệt, tài khoản mới và chuyển nhanh tới các khu vực nội bộ cần xử lý trong ngày.</p>
+                </div>
+                <div class="admin-dashboard-command-meta">
+                  <span class="badge badge-dark">Bảng điều phối nội bộ</span>
+                  <span class="badge">Đồng bộ trực tiếp từ dữ liệu quản trị</span>
+                </div>
+              </div>
+
+              <div class="admin-dashboard-command-actions">
+                <button id="refreshAdminDashboardBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+                <div class="admin-dashboard-command-links">
+                  <a href="#/admin-posts" class="header-link">Mở kiểm duyệt</a>
+                  <a href="#/admin-activities" class="header-link">Xem nhật ký</a>
+                </div>
+              </div>
+            </div>
+
+            <div id="adminDashboardMetrics" class="manage-overview-grid admin-dashboard-metrics"></div>
+          </section>
+
+          <div class="admin-dashboard-layout">
+            <section class="admin-panel admin-dashboard-workbench">
+              <div class="section-head section-head-wrap compact-head">
+                <div>
+                  <p class="kicker">Workbench kiểm duyệt</p>
+                  <h3>Tin đăng cần xử lý trước</h3>
+                  <p class="section-helper">Tập trung vào các bài đang chờ duyệt hoặc cần can thiệp để giữ luồng nội dung sạch và ổn định.</p>
+                </div>
+                <a href="#/admin-posts" class="header-link">Mở toàn bộ hàng chờ</a>
+              </div>
+              <div id="adminDashboardProductsPreview" class="admin-record-list admin-dashboard-workbench-list"></div>
+            </section>
+
+            <div class="admin-dashboard-side">
+              <section class="admin-panel admin-dashboard-users-panel">
+                <div class="section-head section-head-wrap compact-head">
+                  <div>
+                    <p class="kicker">Người dùng mới</p>
+                    <h3>Bảng theo dõi tài khoản</h3>
+                  </div>
+                  <a href="#/admin-users" class="header-link">Mở quản lý người dùng</a>
+                </div>
+                <div id="adminDashboardUsersPreview" class="admin-record-list admin-dashboard-users-list"></div>
+              </section>
+
+              <aside class="admin-panel admin-dashboard-tools-panel">
+                <div class="section-head compact-head">
+                  <div>
+                    <p class="kicker">Quick tools</p>
+                    <h3>Thanh điều hướng nhanh</h3>
+                  </div>
+                </div>
+
+                <div class="admin-dashboard-tools-rail">
+                  <a href="#/admin-users" class="admin-dashboard-tool-card">
+                    <span class="kicker">Tài khoản</span>
+                    <strong>Kiểm soát người dùng</strong>
+                    <p>Rà soát quyền, khóa tạm thời hoặc dọn các hồ sơ không còn phù hợp.</p>
+                  </a>
+                  <a href="#/admin-posts" class="admin-dashboard-tool-card">
+                    <span class="kicker">Nội dung</span>
+                    <strong>Điều phối kiểm duyệt</strong>
+                    <p>Duyệt, từ chối hoặc ẩn các tin cần can thiệp trước khi xuất hiện công khai.</p>
+                  </a>
+                  <a href="#/admin-activities" class="admin-dashboard-tool-card">
+                    <span class="kicker">Nhật ký</span>
+                    <strong>Đối soát thao tác</strong>
+                    <p>Theo dõi các thay đổi quản trị mới nhất để kiểm tra lịch sử xử lý.</p>
+                  </a>
+                </div>
+
+                <div class="admin-dashboard-tools-note">
+                  <span class="status-tag active-tag">Luồng ưu tiên trong ngày</span>
+                  <p>Xử lý hàng chờ duyệt trước, sau đó kiểm tra tài khoản mới và đối chiếu lại lịch sử thao tác khi có thay đổi bất thường.</p>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <section class="admin-panel admin-dashboard-activity-panel">
+            <div class="section-head section-head-wrap compact-head">
+              <div>
+                <p class="kicker">Dòng thời gian nội bộ</p>
+                <h3>Hoạt động quản trị gần đây</h3>
+                <p class="section-helper">Theo dõi mạch thao tác mới nhất để kiểm tra người thực hiện, đối tượng bị tác động và thời điểm cập nhật.</p>
+              </div>
+              <a href="#/admin-activities" class="header-link">Xem toàn bộ nhật ký</a>
+            </div>
+            <div id="adminDashboardActivitiesPreview" class="admin-activity-list admin-dashboard-activity-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           ADMIN USERS
+           ====================================================== -->
+      <section class="page" data-page="admin-users">
+        <section class="manage-overview-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Quản trị thành viên</p>
+              <h3>Quản lý người dùng</h3>
+              <p class="section-helper">Cập nhật vai trò, khóa tài khoản và dọn dẹp các hồ sơ không còn phù hợp.</p>
+            </div>
+            <button id="refreshAdminUsersBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+          </div>
+          <div id="adminUserMetrics" class="manage-overview-grid"></div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="section-head section-head-wrap compact-head">
+            <div>
+              <p class="kicker">Danh sách tài khoản</p>
+              <h3>Người dùng trong hệ thống</h3>
+            </div>
+          </div>
+          <div id="adminUsersList" class="admin-record-list"></div>
+        </section>
+      </section>
+
+      <!-- ======================================================
+           ADMIN POSTS
+           ====================================================== -->
+      <section class="page" data-page="admin-posts">
+        <section class="manage-overview-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Quản trị nội dung</p>
+              <h3>Kiểm duyệt tin đăng</h3>
+              <p class="section-helper">Xem trạng thái tin, duyệt nội dung hợp lệ và xóa các bài đăng cần gỡ khỏi hệ thống.</p>
+            </div>
+            <button id="refreshAdminProductsBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+          </div>
+          <div id="adminProductMetrics" class="manage-overview-grid"></div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="section-head section-head-wrap compact-head">
+            <div>
+              <p class="kicker">Danh sách tin</p>
+              <h3>Luồng duyệt bài đăng</h3>
+            </div>
+          </div>
+          <div id="adminProductsList" class="admin-record-list"></div>
+        </section>
+      </section>
+
+      <!-- ======================================================
+           ADMIN ACTIVITIES
+           ====================================================== -->
+      <section class="page" data-page="admin-activities">
+        <section class="manage-overview-shell">
+          <div class="section-head section-head-wrap">
+            <div>
+              <p class="kicker">Theo dõi nội bộ</p>
+              <h3>Nhật ký hoạt động quản trị</h3>
+              <p class="section-helper">Kiểm tra các thao tác gần đây để đảm bảo mọi thay đổi đều có thể truy vết rõ ràng.</p>
+            </div>
+            <button id="refreshAdminActivitiesBtn" type="button" class="btn btn-secondary btn-sm">Tải lại</button>
+          </div>
+          <div id="adminActivityMetrics" class="manage-overview-grid"></div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="section-head section-head-wrap compact-head">
+            <div>
+              <p class="kicker">Lịch sử thao tác</p>
+              <h3>Bản ghi đã thực hiện</h3>
+            </div>
+          </div>
+          <div id="adminActivitiesList" class="admin-activity-list"></div>
+        </section>
+      </section>
+
+    </main><!-- /app-content -->
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>DoAnJS Marketplace</span>
+      </div>
+    </footer>
+
+  </div><!-- /appShell -->
