@@ -511,7 +511,7 @@ productReportForm?.addEventListener('submit', async (event) => {
 
   const formData = new FormData(productReportForm);
   const reasonCode = String(formData.get('reasonCode') || '').trim();
-  const reasonText = String(formData.get('reasonText') || '').trim();
+  const reasonTextInput = String(formData.get('reasonText') || '').trim();
   const selectedReason = REPORT_REASON_OPTIONS.find((item) => item.code === reasonCode);
 
   if (!selectedReason) {
@@ -519,11 +519,7 @@ productReportForm?.addEventListener('submit', async (event) => {
     return;
   }
 
-  if (!reasonText) {
-    setInlineBox(productReportFeedback, 'Vui lòng bổ sung mô tả chi tiết trước khi gửi báo cáo.', 'error');
-    productReportReasonText?.focus();
-    return;
-  }
+  const reasonText = reasonTextInput || `Lý do người dùng chọn: ${selectedReason.label}.`;
 
   if (reasonText.length > 500) {
     setInlineBox(productReportFeedback, 'Mô tả báo cáo tối đa 500 ký tự.', 'error');

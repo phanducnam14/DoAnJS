@@ -54,13 +54,13 @@ async function loadAdminDashboard() {
 }
 
 async function submitProductReport(productId, reasonText, reasonCode = 'other') {
-  await apiFetch(`/api/products/${productId}/report`, {
+  const response = await apiFetch(`/api/products/${productId}/report`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ reasonText, reasonCode })
   });
 
-  setBanner(globalMessage, 'Báo cáo đã được gửi để quản trị viên xem xét.');
+  setBanner(globalMessage, response.message || 'Báo cáo thành công.', 'success');
 }
 
 async function loadNotifications({ silent = false, skipMarkRead = false } = {}) {

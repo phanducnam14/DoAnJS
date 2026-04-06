@@ -1,0 +1,16 @@
+[     215ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:0
+[     297ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775397027779.png:0
+[     297ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775381084153.png:0
+[     298ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775380698413.png:0
+[     298ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775380608130.jpg:0
+[     298ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775380339934.png:0
+[     299ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775380042883.png:0
+[     299ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775379672997.png:0
+[     299ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775379315556.png:0
+[     299ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775379050098.jpg:0
+[     334ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775397027779.png:0
+[     335ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775381084153.png:0
+[     335ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775380698413.png:0
+[     336ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/uploads/1775380608130.jpg:0
+[   58162ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://encrypted-tbn2.gstatic.com/faviconV2?url=https://qr.zalo.me&client=IMAGE_SEARCH&size=24&type=FAVICON&fallback_opts=TYPE,SIZE,URL:0
+[   58176ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://encrypted-tbn1.gstatic.com/faviconV2?url=https://zalo.me&client=IMAGE_SEARCH&size=24&type=FAVICON&fallback_opts=TYPE,SIZE,URL:0

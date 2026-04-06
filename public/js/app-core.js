@@ -802,6 +802,7 @@ function renderProductReportModal() {
 
   const { open, productTitle, submitting, success } = state.productReport;
   productReportModal.hidden = !open;
+  productReportModal.style.display = open ? 'grid' : 'none';
   productReportModal.setAttribute('aria-hidden', String(!open));
   document.body.classList.toggle('report-modal-open', open);
 
@@ -815,8 +816,8 @@ function renderProductReportModal() {
 
   if (productReportSuccessText) {
     productReportSuccessText.textContent = productTitle
-      ? `Báo cáo cho tin đăng "${productTitle}" đã được gửi tới quản trị viên để xem xét.`
-      : 'Báo cáo đã được gửi tới quản trị viên để xem xét.';
+      ? `Báo cáo thành công. Quản trị viên sẽ xem xét tin đăng "${productTitle}" trong thời gian sớm nhất.`
+      : 'Báo cáo thành công. Quản trị viên sẽ xem xét phản ánh của bạn trong thời gian sớm nhất.';
   }
 
   if (productReportForm) {
@@ -1151,12 +1152,14 @@ function updateAuthTabsUI(activePanel) {
 }
 
 function showAuthScreen(tab = 'login') {
+  closeProductReportModal({ force: true });
   authScreen.classList.remove('hidden');
   appShell.classList.add('hidden');
   openAuthTab(tab);
 }
 
 function showAppShell() {
+  closeProductReportModal({ force: true });
   authScreen.classList.add('hidden');
   appShell.classList.remove('hidden');
   updateHeaderMetrics();

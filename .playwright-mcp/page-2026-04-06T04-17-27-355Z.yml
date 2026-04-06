@@ -1,0 +1,22 @@
+- generic [active] [ref=e1]:
+  - link "Bỏ qua điều hướng" [ref=e2] [cursor=pointer]:
+    - /url: "#mainContent"
+  - generic [ref=e4]:
+    - generic [ref=e6]: DoAnJS Marketplace
+    - generic [ref=e7]:
+      - tablist "Xác thực tài khoản" [ref=e8]:
+        - tab "Đăng nhập" [selected] [ref=e9] [cursor=pointer]
+        - tab "Đăng ký" [ref=e10] [cursor=pointer]
+      - tabpanel "Đăng nhập" [ref=e11]:
+        - heading "Đăng nhập để tiếp tục" [level=2] [ref=e13]
+        - generic [ref=e14]:
+          - generic [ref=e15]:
+            - generic [ref=e16]: Email
+            - textbox "Email" [ref=e17]:
+              - /placeholder: Nhập địa chỉ email
+          - generic [ref=e18]:
+            - generic [ref=e19]: Mật khẩu
+            - textbox "Mật khẩu" [ref=e20]:
+              - /placeholder: Nhập mật khẩu
+          - button "Quên mật khẩu?" [ref=e22] [cursor=pointer]
+          - button "Đăng nhập" [ref=e23] [cursor=pointer]
